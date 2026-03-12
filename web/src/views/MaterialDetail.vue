@@ -229,7 +229,7 @@ const handleBuy = async () => {
         })
         // Assuming createOrder returns orderId or order object
         ElMessage.success('订单创建成功')
-        router.push('/orders') 
+        router.push('/order/list') 
     } catch (error) {
         console.error(error)
     }

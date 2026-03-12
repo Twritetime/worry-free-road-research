@@ -10,12 +10,16 @@ import com.yanluwuyou.dto.OrderDTO;
 import com.yanluwuyou.entity.Order;
 import com.yanluwuyou.entity.OrderItem;
 import com.yanluwuyou.entity.User;
+import com.yanluwuyou.config.AlipayConfig;
 import com.yanluwuyou.service.OrderItemService;
 import com.yanluwuyou.service.OrderService;
 import com.yanluwuyou.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpServletResponse;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,12 +39,20 @@ public class OrderController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private AlipayConfig alipayConfig;
+
     /**
      * 创建订单
      */
     @PostMapping("/create")
     public Result<OrderDTO> create(@RequestBody OrderCreateDTO orderCreateDTO) {
         return Result.success(orderService.createOrder(orderCreateDTO));
+    }
+
+    @GetMapping("/by-no/{orderNo}")
+    public Result<OrderDTO> getByOrderNo(@PathVariable String orderNo) {
+        return Result.success(orderService.getByOrderNo(orderNo));
     }
 
     /**
@@ -96,9 +108,47 @@ public class OrderController {
      * 支付订单
      */
     @PostMapping("/pay/{id}")
-    public Result<?> pay(@PathVariable Long id) {
-        orderService.payOrder(id);
-        return Result.success();
+    public Result<String> pay(@PathVariable Long id) {
+        try {
+            return Result.success(orderService.payOrder(id));
+        } catch (RuntimeException e) {
+            if ("订单已支付".equals(e.getMessage())) {
+                // 如果是“订单已支付”异常，我们手动触发一次状态更新（这里不依赖事务回滚）
+                Order order = orderService.getById(id);
+                if (order != null && order.getStatus() == 0) {
+                    orderService.updateOrderStatus(id, 1);
+                }
+            }
+            throw e; // 继续抛出让全局处理器返回错误信息给前端，前端逻辑依赖这个错误文本
+        }
+    }
+
+    /**
+     * 支付宝异步回调通知
+     */
+    @PostMapping("/alipay-notify")
+    public String alipayNotify(@RequestParam java.util.Map<String, String> params) {
+        boolean verified = orderService.handleAlipayNotify(params);
+        return verified ? "success" : "fail";
+    }
+
+    @GetMapping("/alipay-return")
+    public void alipayReturn(@RequestParam java.util.Map<String, String> params, HttpServletResponse response) {
+        orderService.handleAlipayNotify(params);
+        String orderNo = params.get("out_trade_no");
+        String target = alipayConfig.getFrontendReturnUrl();
+        if (orderNo != null && !orderNo.isEmpty()) {
+            String encoded = URLEncoder.encode(orderNo, StandardCharsets.UTF_8);
+            if (target.contains("?")) {
+                target = target + "&out_trade_no=" + encoded;
+            } else {
+                target = target + "?out_trade_no=" + encoded;
+            }
+        }
+        try {
+            response.sendRedirect(target);
+        } catch (Exception ignored) {
+        }
     }
 
     /**

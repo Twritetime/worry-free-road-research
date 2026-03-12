@@ -43,14 +43,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { getOrderList, payOrder } from '@/api/trade'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import { storeToRefs } from 'pinia'
 
 const router = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
 const { user } = storeToRefs(userStore)
 
@@ -58,8 +59,21 @@ const orderList = ref([])
 const loading = ref(false)
 
 onMounted(() => {
-    fetchOrders()
+    // onMounted 中只负责检查一次，如果用户已登录则立即执行
+    if (user.value.id) {
+        fetchOrders()
+        handleReturn()
+    }
 })
+
+// 增加一个 watch 来处理 Pinia 状态延迟恢复的情况
+watch(() => user.value.id, (newId, oldId) => {
+    // 只有当 ID 从无到有时才触发，避免重复执行
+    if (newId && !oldId) {
+        fetchOrders()
+        handleReturn()
+    }
+}, { immediate: false }) // immediate: false 避免在初始时重复执行
 
 const fetchOrders = async () => {
     if (!user.value.id) {
@@ -84,20 +98,60 @@ const goToMaterial = (id) => {
 }
 
 const handlePay = (id) => {
-    ElMessageBox.confirm('确认支付该订单吗?', '支付确认', {
-        confirmButtonText: '支付',
-        cancelButtonText: '取消',
+    ElMessageBox.confirm('确认前往支付宝支付该订单吗?', '支付确认', {
+        confirmButtonText: '立即支付',
+        cancelButtonText: '稍后再说',
         type: 'success',
         center: true
     }).then(async () => {
         try {
-            await payOrder(id)
-            ElMessage.success('支付成功')
-            fetchOrders()
+            const res = await payOrder(id)
+            if (res) {
+                const div = document.createElement('div')
+                div.innerHTML = res
+                document.body.appendChild(div)
+                document.forms[0].submit()
+            } else {
+                ElMessage.error('获取支付表单失败')
+            }
         } catch (error) {
-            ElMessage.error('支付失败')
+            console.error(error)
+            if (error === '订单已支付') {
+                ElMessage.success('订单已支付')
+                fetchOrders()
+                return
+            }
+            ElMessage.error('发起支付失败')
         }
     })
+}
+
+const handleReturn = () => {
+    if (!user.value.id) {
+        return
+    }
+    const rawOrderNo = route.query.out_trade_no
+    const orderNo = Array.isArray(rawOrderNo) ? rawOrderNo[0] : rawOrderNo
+    if (!orderNo) {
+        return
+    }
+    const startedAt = Date.now()
+    const poll = async () => {
+        await fetchOrders()
+        const matched = orderList.value.find(order => order.orderNo === orderNo)
+        if (matched && matched.status === 1) {
+            ElMessage.success('支付成功')
+            router.replace({ path: '/order/list', query: {} })
+            return
+        }
+        if (Date.now() - startedAt >= 30000) {
+            ElMessage.warning('支付结果同步中，请稍后在订单列表查看')
+            router.replace({ path: '/order/list', query: {} })
+            return
+        }
+        setTimeout(poll, 2000)
+    }
+    poll()
 }
 
 const getStatusTag = (status) => {

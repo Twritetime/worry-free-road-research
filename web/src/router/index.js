@@ -39,7 +39,8 @@ const routes = [
   { path: '/posts/edit/:id', name: 'PostEdit', component: PostEdit },
   { path: '/posts/:id', name: 'PostDetail', component: PostDetail },
   { path: '/cart', name: 'Cart', component: Cart },
-  { path: '/orders', name: 'OrderList', component: OrderList },
+  { path: '/order/success', name: 'OrderSuccess', component: () => import('../views/OrderSuccess.vue') },
+  { path: '/order/list', name: 'OrderList', component: OrderList },
   { path: '/profile', name: 'Profile', component: Profile },
   {
     path: '/admin',

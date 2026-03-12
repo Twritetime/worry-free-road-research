@@ -70,6 +70,14 @@ export const checkPurchased = (userId, materialId) => {
     })
 }
 
+// 根据订单号获取订单详情
+export const getOrderByNo = (orderNo) => {
+    return request({
+        url: `/order/by-no/${orderNo}`,
+        method: 'get'
+    })
+}
+
 // 获取所有订单（管理端）
 export const getAllOrders = (params) => {
     return request({

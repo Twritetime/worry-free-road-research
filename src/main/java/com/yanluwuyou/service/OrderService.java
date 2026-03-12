@@ -18,14 +18,25 @@ public interface OrderService extends IService<Order> {
     OrderDTO createOrder(OrderCreateDTO orderCreateDTO);
     
     /**
+     * 根据订单号获取订单详情
+     */
+    OrderDTO getByOrderNo(String orderNo);
+
+    /**
      * 获取用户订单列表
      */
     List<OrderDTO> getUserOrders(Long userId);
     
     /**
      * 支付订单
+     * @return 支付宝支付表单 HTML
      */
-    void payOrder(Long orderId);
+    String payOrder(Long orderId);
+
+    /**
+     * 处理支付宝回调通知
+     */
+    boolean handleAlipayNotify(java.util.Map<String, String> params);
 
     /**
      * 更新订单状态
