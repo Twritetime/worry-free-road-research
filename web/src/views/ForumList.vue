@@ -217,16 +217,20 @@ const getSummary = (content) => {
 <style scoped>
 .page-container {
     min-height: 100vh;
-    background-color: #f5f7fa;
+    background:
+      radial-gradient(circle at 0% -15%, rgba(99, 102, 241, 0.16), transparent 45%),
+      radial-gradient(circle at 100% 12%, rgba(59, 130, 246, 0.14), transparent 38%),
+      linear-gradient(180deg, #f9fbff 0%, #f4f8ff 44%, #f8fbff 100%);
 }
 
 .page-header {
-    background: linear-gradient(135deg, #67C23A 0%, #529b2e 100%);
-    color: white;
-    padding: 60px 0 80px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(8px);
+    padding: 60px 0 40px;
     position: relative;
     overflow: hidden;
     text-align: center;
+    margin-bottom: 30px;
 }
 
 .header-content {
@@ -238,16 +242,16 @@ const getSummary = (content) => {
 }
 
 .page-title {
-    font-size: 48px;
+    font-size: 32px;
     font-weight: 700;
-    margin-bottom: 16px;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 10px;
+    color: var(--text-primary);
 }
 
 .page-subtitle {
-    font-size: 18px;
-    margin-bottom: 40px;
-    opacity: 0.9;
+    font-size: 16px;
+    color: var(--text-secondary);
+    margin-bottom: 30px;
 }
 
 .search-wrapper {
@@ -272,15 +276,15 @@ const getSummary = (content) => {
     left: 0;
     right: 0;
     bottom: 0;
-    background-image: radial-gradient(circle at 20% 150%, rgba(255,255,255,0.15) 0%, transparent 50%),
-                      radial-gradient(circle at 80% -50%, rgba(255,255,255,0.15) 0%, transparent 50%);
+    background-image: radial-gradient(circle at 20% 150%, rgba(99,102,241,0.12) 0%, transparent 52%),
+                      radial-gradient(circle at 80% -50%, rgba(59,130,246,0.12) 0%, transparent 52%);
     z-index: 1;
 }
 
 .main-content {
-    max-width: 1000px;
-    margin: -40px auto 40px;
-    padding: 0 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
     position: relative;
     z-index: 3;
 }

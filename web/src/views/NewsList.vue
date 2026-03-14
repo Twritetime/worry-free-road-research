@@ -36,13 +36,13 @@
                 全部
             </div>
             <div 
-                v-for="type in ['报考', '政策', '经验']" 
-                :key="type"
+                v-for="item in NEWS_TYPE_OPTIONS" 
+                :key="item.value"
                 class="filter-tab" 
-                :class="{ active: activeType === type }"
-                @click="handleTypeChange(type)"
+                :class="{ active: activeType === item.value }"
+                @click="handleTypeChange(item.value)"
             >
-                {{ type }}
+                {{ item.label }}
             </div>
           </div>
           <div class="flex-spacer"></div>
@@ -56,7 +56,7 @@
              </div>
              <div class="news-content">
                 <div class="news-header">
-                    <el-tag size="small" :type="getTypeTag(item.type)" effect="light">{{ item.type }}</el-tag>
+                    <el-tag size="small" :type="getTypeTag(item.type)" effect="light">{{ getTypeLabel(item.type) }}</el-tag>
                     <span class="news-date">{{ formatDate(item.createTime) }}</span>
                 </div>
                 <h3 class="news-title">{{ item.title }}</h3>
@@ -97,9 +97,7 @@
                 <el-col :span="12">
                      <el-form-item label="类型">
                         <el-select v-model="newsForm.type" style="width: 100%" size="large">
-                            <el-option label="报考" value="报考"></el-option>
-                            <el-option label="政策" value="政策"></el-option>
-                            <el-option label="经验" value="经验"></el-option>
+                            <el-option v-for="item in NEWS_TYPE_OPTIONS" :key="item.value" :label="item.label" :value="item.value"></el-option>
                         </el-select>
                     </el-form-item>
                 </el-col>
@@ -141,6 +139,16 @@ const total = ref(0)
 const dialogVisible = ref(false)
 const newsForm = ref({})
 const formTitle = ref('发布资讯')
+const NEWS_TYPE_OPTIONS = [
+    { label: '报考指南', value: '报考' },
+    { label: '政策解读', value: '政策' },
+    { label: '备考经验', value: '经验' },
+    { label: '复试调剂', value: '复试调剂' }
+]
+const NEWS_TYPE_LABEL_MAP = NEWS_TYPE_OPTIONS.reduce((map, item) => {
+    map[item.value] = item.label
+    return map
+}, {})
 
 onMounted(() => {
     fetchNews()
@@ -182,11 +190,16 @@ const viewDetail = (id) => {
 
 const getTypeTag = (type) => {
     const map = {
-        '报考': 'warning',
-        '政策': 'danger',
-        '经验': 'success'
+        '报考': 'primary',
+        '政策': 'warning',
+        '经验': 'success',
+        '复试调剂': 'danger'
     }
     return map[type] || 'primary'
+}
+
+const getTypeLabel = (type) => {
+    return NEWS_TYPE_LABEL_MAP[type] || type
 }
 
 const formatDate = (date) => {
@@ -200,7 +213,7 @@ const getSummary = (content) => {
 }
 
 const handleAdd = () => {
-    newsForm.value = { type: '报考', status: 1 }
+    newsForm.value = { type: NEWS_TYPE_OPTIONS[0].value, status: 1 }
     formTitle.value = '发布资讯'
     dialogVisible.value = true
 }
@@ -244,16 +257,20 @@ const handleSubmit = async () => {
 <style scoped>
 .page-container {
     min-height: 100vh;
-    background-color: #f5f7fa;
+    background:
+      radial-gradient(circle at 0% -15%, rgba(99, 102, 241, 0.16), transparent 45%),
+      radial-gradient(circle at 100% 12%, rgba(59, 130, 246, 0.14), transparent 38%),
+      linear-gradient(180deg, #f9fbff 0%, #f4f8ff 44%, #f8fbff 100%);
 }
 
 .page-header {
-    background: linear-gradient(135deg, #409EFF 0%, #3a8ee6 100%);
-    color: white;
-    padding: 60px 0 80px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(8px);
+    padding: 60px 0 40px;
     position: relative;
     overflow: hidden;
     text-align: center;
+    margin-bottom: 30px;
 }
 
 .header-content {
@@ -265,16 +282,16 @@ const handleSubmit = async () => {
 }
 
 .page-title {
-    font-size: 48px;
+    font-size: 32px;
     font-weight: 700;
-    margin-bottom: 16px;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 10px;
+    color: var(--text-primary);
 }
 
 .page-subtitle {
-    font-size: 18px;
-    margin-bottom: 40px;
-    opacity: 0.9;
+    font-size: 16px;
+    color: var(--text-secondary);
+    margin-bottom: 30px;
 }
 
 .search-wrapper {
@@ -299,15 +316,15 @@ const handleSubmit = async () => {
     left: 0;
     right: 0;
     bottom: 0;
-    background-image: radial-gradient(circle at 20% 150%, rgba(255,255,255,0.15) 0%, transparent 50%),
-                      radial-gradient(circle at 80% -50%, rgba(255,255,255,0.15) 0%, transparent 50%);
+    background-image: radial-gradient(circle at 20% 150%, rgba(99,102,241,0.12) 0%, transparent 52%),
+                      radial-gradient(circle at 80% -50%, rgba(59,130,246,0.12) 0%, transparent 52%);
     z-index: 1;
 }
 
 .main-content {
     max-width: 1200px;
-    margin: -40px auto 40px;
-    padding: 0 20px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
     position: relative;
     z-index: 3;
 }

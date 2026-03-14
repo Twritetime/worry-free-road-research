@@ -304,11 +304,15 @@ const handleSubmit = async () => {
 <style scoped>
 .page-container {
     min-height: 100vh;
-    background-color: var(--bg-color);
+    background:
+      radial-gradient(circle at 0% -15%, rgba(99, 102, 241, 0.16), transparent 45%),
+      radial-gradient(circle at 100% 12%, rgba(59, 130, 246, 0.14), transparent 38%),
+      linear-gradient(180deg, #f9fbff 0%, #f4f8ff 44%, #f8fbff 100%);
 }
 
 .page-header {
-    background: white;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(8px);
     padding: 60px 0 40px;
     text-align: center;
     position: relative;
@@ -342,6 +346,17 @@ const handleSubmit = async () => {
     margin: 0 auto;
     box-shadow: 0 10px 30px rgba(0,0,0,0.05);
     border-radius: 4px;
+}
+
+.header-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: radial-gradient(circle at 20% 150%, rgba(99,102,241,0.12) 0%, transparent 52%),
+                      radial-gradient(circle at 80% -50%, rgba(59,130,246,0.12) 0%, transparent 52%);
+    z-index: 1;
 }
 
 .info-tag {
@@ -461,9 +476,9 @@ const handleSubmit = async () => {
 }
 
 .guide-icon-box.zhaoshengjianzhang { background: #e0f2fe; color: #0284c7; }
-.guide-icon-box.zhuanyemulu { background: #dcfce7; color: #16a34a; }
-.guide-icon-box.kaoshidagang { background: #fef9c3; color: #ca8a04; }
-.guide-icon-box.fushixize { background: #fee2e2; color: #dc2626; }
+.guide-icon-box.zhuanyemulu { background: #dbeafe; color: #2563eb; }
+.guide-icon-box.kaoshidagang { background: #eff6ff; color: #3b82f6; }
+.guide-icon-box.fushixize { background: #e0ecff; color: #1d4ed8; }
 
 .guide-info {
     flex: 1;

@@ -65,7 +65,7 @@
                     <div v-for="item in newsList" :key="item.id" class="news-card" @click="viewNews(item.id)">
                         <div class="news-content">
                             <div class="news-badges">
-                                <el-tag size="small" :type="getTypeTag(item.type)" effect="plain" round>{{ item.type }}</el-tag>
+                                <el-tag size="small" :type="getTypeTag(item.type)" effect="plain" round>{{ getTypeLabel(item.type) }}</el-tag>
                                 <span class="news-date">{{ formatDate(item.createTime) }}</span>
                             </div>
                             <h3 class="news-title">{{ item.title }}</h3>
@@ -85,13 +85,14 @@
                 <div class="sidebar-section">
                     <h3 class="sidebar-title">热门推荐</h3>
                     <div class="ranking-list">
-                        <div v-for="i in 5" :key="i" class="ranking-item">
-                            <span class="rank-num" :class="'rank-' + i">{{ i }}</span>
+                        <div v-for="(item, index) in hotRecommendations" :key="item.id" class="ranking-item" @click="viewNews(item.id)">
+                            <span class="rank-num" :class="'rank-' + (index + 1)">{{ index + 1 }}</span>
                             <div class="rank-info">
-                                <span class="rank-title">2025考研复习全攻略 - 重点解析系列 {{ i }}</span>
-                                <span class="rank-heat">🔥 {{ 1000 - i * 50 }} 热度</span>
+                                <span class="rank-title">{{ item.title }}</span>
+                                <span class="rank-heat">🔥 {{ item.hot }} 热度</span>
                             </div>
                         </div>
+                        <el-empty v-if="!loading && hotRecommendations.length === 0" description="暂无热门推荐"></el-empty>
                     </div>
                 </div>
 
@@ -124,9 +125,7 @@
                 </el-form-item>
                 <el-form-item label="类型">
                     <el-select v-model="newsForm.type" style="width: 100%">
-                        <el-option label="报考" value="报考"></el-option>
-                        <el-option label="政策" value="政策"></el-option>
-                        <el-option label="经验" value="经验"></el-option>
+                        <el-option v-for="item in NEWS_TYPE_OPTIONS" :key="item.value" :label="item.label" :value="item.value"></el-option>
                     </el-select>
                 </el-form-item>
                 <el-form-item label="内容">
@@ -142,7 +141,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArrowRight, Document, ChatDotRound, Trophy, Edit, Delete, Collection, Reading, Microphone } from '@element-plus/icons-vue'
 import { getNewsList, createNews, updateNews, deleteNews } from '@/api/news'
@@ -159,6 +158,22 @@ const loading = ref(false)
 const dialogVisible = ref(false)
 const newsForm = ref({})
 const formTitle = ref('发布资讯')
+const NEWS_TYPE_OPTIONS = [
+    { label: '报考指南', value: '报考' },
+    { label: '政策解读', value: '政策' },
+    { label: '备考经验', value: '经验' },
+    { label: '复试调剂', value: '复试调剂' }
+]
+const NEWS_TYPE_LABEL_MAP = NEWS_TYPE_OPTIONS.reduce((map, item) => {
+    map[item.value] = item.label
+    return map
+}, {})
+const hotRecommendations = computed(() =>
+    (newsList.value || []).slice(0, 5).map((item, index) => ({
+        ...item,
+        hot: item.viewCount || Math.max(900 - index * 80, 500)
+    }))
+)
 
 onMounted(() => {
     fetchNews()
@@ -183,10 +198,15 @@ const viewNews = (id) => {
 const getTypeTag = (type) => {
     const map = {
         '报考': 'primary',
-        '政策': 'danger',
-        '经验': 'success'
+        '政策': 'warning',
+        '经验': 'success',
+        '复试调剂': 'danger'
     }
     return map[type] || 'info'
+}
+
+const getTypeLabel = (type) => {
+    return NEWS_TYPE_LABEL_MAP[type] || type
 }
 
 const formatDate = (dateStr) => {
@@ -201,7 +221,7 @@ const stripHtml = (html) => {
 }
 
 const handleAddNews = () => {
-    newsForm.value = { type: '报考', status: 1 }
+    newsForm.value = { type: NEWS_TYPE_OPTIONS[0].value, status: 1 }
     formTitle.value = '发布资讯'
     dialogVisible.value = true
 }
@@ -243,8 +263,23 @@ const handleSubmit = async () => {
 </script>
 
 <style scoped>
+.home-container {
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at 10% -20%, rgba(56, 189, 248, 0.24), transparent 45%),
+        radial-gradient(circle at 95% 15%, rgba(59, 130, 246, 0.18), transparent 40%),
+        linear-gradient(180deg, #f8fbff 0%, #eef6ff 35%, #f4f8ff 100%);
+}
+
+.content-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+}
+
 .hero-section {
-    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    background: linear-gradient(135deg, rgba(255,255,255,0.88) 0%, rgba(238,246,255,0.9) 100%);
+    backdrop-filter: blur(6px);
     padding: 80px 0;
     margin-bottom: 60px;
     border-radius: 0 0 40px 40px;
@@ -475,6 +510,12 @@ const handleSubmit = async () => {
     gap: 16px;
     padding: 12px 0;
     border-bottom: 1px solid #f1f5f9;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.ranking-item:hover {
+    transform: translateX(4px);
 }
 
 .ranking-item:last-child {
@@ -547,8 +588,8 @@ const handleSubmit = async () => {
 }
 
 .icon-box.public { background: #eff6ff; color: #3b82f6; }
-.icon-box.major { background: #f0fdf4; color: #22c55e; }
-.icon-box.interview { background: #fff1f2; color: #f43f5e; }
+.icon-box.major { background: #eff6ff; color: #2563eb; }
+.icon-box.interview { background: #dbeafe; color: #1d4ed8; }
 
 .quick-link-item span {
     font-size: 12px;
