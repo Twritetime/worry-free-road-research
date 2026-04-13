@@ -46,6 +46,22 @@
             </div>
           </div>
           <div class="flex-spacer"></div>
+          <div class="sort-wrapper">
+            <span class="sort-label">排序：</span>
+            <el-select v-model="sortBy" size="default" style="width: 140px;" @change="handleSortChange">
+              <el-option label="按发布时间" value="createTime" />
+              <el-option label="按浏览量" value="viewCount" />
+              <el-option label="按评论数" value="commentCount" />
+            </el-select>
+            <el-button-group class="sort-order">
+              <el-button :type="sortOrder === 'desc' ? 'primary' : 'default'" @click="handleSortOrderChange('desc')">
+                <el-icon><SortDown /></el-icon>
+              </el-button>
+              <el-button :type="sortOrder === 'asc' ? 'primary' : 'default'" @click="handleSortOrderChange('asc')">
+                <el-icon><SortUp /></el-icon>
+              </el-button>
+            </el-button-group>
+          </div>
           <el-button type="primary" :icon="EditPen" @click="handleCreate" class="create-btn">发布帖子</el-button>
        </div>
 
@@ -87,7 +103,7 @@
                 <el-button circle size="small" type="danger" :icon="Delete" @click="handleDelete(item)"></el-button>
             </div>
           </div>
-          <el-empty v-if="!loading && postList.length === 0" description="暂无帖子" />
+          <el-empty v-if="!loading && postList.length === 0" description="暂时没有相关信息" />
        </div>
 
         <div class="pagination-wrapper">
@@ -111,7 +127,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import { storeToRefs } from 'pinia'
-import { Search, EditPen, View, ChatDotRound, Star, Delete } from '@element-plus/icons-vue'
+import { Search, EditPen, View, ChatDotRound, Star, Delete, SortDown, SortUp } from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
 
 const router = useRouter()
@@ -125,6 +141,8 @@ const pageNum = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 const activeCategory = ref('')
+const sortBy = ref('createTime')
+const sortOrder = ref('desc')
 
 const categoryMap = {
     1: '公共课交流',
@@ -144,7 +162,9 @@ const fetchPosts = async () => {
             pageNum: pageNum.value,
             pageSize: pageSize.value,
             keyword: keyword.value,
-            category: activeCategory.value || undefined
+            category: activeCategory.value || undefined,
+            sortBy: sortBy.value,
+            sortOrder: sortOrder.value
         }
         const res = await getPostList(params)
         postList.value = res.records || []
@@ -158,6 +178,17 @@ const fetchPosts = async () => {
 
 const handleCategoryChange = (category) => {
     activeCategory.value = category
+    pageNum.value = 1
+    fetchPosts()
+}
+
+const handleSortChange = () => {
+    pageNum.value = 1
+    fetchPosts()
+}
+
+const handleSortOrderChange = (order) => {
+    sortOrder.value = order
     pageNum.value = 1
     fetchPosts()
 }
@@ -210,7 +241,9 @@ const formatDate = (date) => {
 
 const getSummary = (content) => {
     if (!content) return '暂无内容'
-    return content.substring(0, 100).replace(/<[^>]+>/g, '') + '...'
+    // 移除HTML标签和常见的HTML实体
+    const text = content.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+    return text.length > 100 ? text.substring(0, 100) + '...' : text
 }
 </script>
 
@@ -330,6 +363,21 @@ const getSummary = (content) => {
 
 .flex-spacer {
     flex: 1;
+}
+
+.sort-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sort-label {
+    color: #606266;
+    font-size: 14px;
+}
+
+.sort-order {
+    margin-left: 4px;
 }
 
 .post-list {

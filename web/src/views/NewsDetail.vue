@@ -26,7 +26,13 @@
          <el-divider />
 
          <div v-if="news.coverImg" class="article-cover">
-             <img :src="news.coverImg" alt="Cover Image" />
+             <el-image
+               :src="news.coverImg"
+               :preview-src-list="[news.coverImg]"
+               fit="cover"
+               :preview-teleported="true"
+               style="width: 100%; max-height: 400px"
+             />
          </div>
 
          <div class="article-body markdown-body" v-html="renderContent(news.content)"></div>
@@ -55,7 +61,7 @@
           </div>
           
           <div class="comment-input-wrapper">
-              <div class="user-avatar" v-if="currentUser">
+              <div class="user-avatar" v-if="currentUser?.id">
                   <el-avatar :size="40" :src="currentUser.avatar || 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'" />
               </div>
               <div class="input-box">
@@ -241,7 +247,7 @@ const submitComment = async () => {
         return
     }
     
-    if (!currentUser.value) {
+    if (!currentUser.value?.id) {
         ElMessage.warning('请先登录')
         // router.push('/login') // router is not defined in this scope, need to import or use route
         return

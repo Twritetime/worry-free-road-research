@@ -21,13 +21,28 @@
             </el-button>
           </template>
         </el-input>
+        <el-button type="danger" @click="handleBatchDelete" :disabled="selectedRows.length === 0" style="margin-left: 10px">
+          <el-icon><Delete /></el-icon> 批量删除
+        </el-button>
       </div>
     </div>
 
     <el-card>
-      <el-table :data="feedbackList" v-loading="loading" style="width: 100%">
+      <el-table :data="feedbackList" v-loading="loading" style="width: 100%" @selection-change="handleSelectionChange">
+        <el-table-column type="selection" width="55" />
         <el-table-column prop="id" label="ID" width="80" />
-        <!-- Type column removed as it is not in backend entity -->
+        <el-table-column prop="type" label="问题类型" width="100">
+          <template #default="{ row }">
+            <el-tag v-if="row.type" type="primary" effect="plain">{{ row.type }}</el-tag>
+            <span v-else style="color: #999">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="contact" label="联系方式" width="150">
+          <template #default="{ row }">
+            <span v-if="row.contact">{{ row.contact }}</span>
+            <span v-else style="color: #999">-</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="content" label="反馈内容" show-overflow-tooltip />
         <el-table-column prop="nickname" label="用户" width="120" />
         <el-table-column prop="createTime" label="提交时间" width="180">
@@ -70,26 +85,31 @@
     <el-dialog
       v-model="replyDialogVisible"
       :title="currentFeedback?.status === 1 ? '反馈详情' : '回复反馈'"
-      width="500px"
+      width="600px"
     >
       <div class="feedback-detail" v-if="currentFeedback">
-        <p><strong>用户：</strong>{{ currentFeedback.nickname }}</p>
-        <p><strong>时间：</strong>{{ currentFeedback.createTime ? currentFeedback.createTime.replace('T', ' ') : '' }}</p>
-        <p><strong>内容：</strong></p>
-        <div class="content-box">{{ currentFeedback.content }}</div>
-        
-        <div v-if="currentFeedback.images && currentFeedback.images.length" class="images-box">
-             <el-image 
-                v-for="(img, index) in currentFeedback.images" 
-                :key="index"
-                :src="img" 
-                :preview-src-list="currentFeedback.images"
-                fit="cover"
-                style="width: 100px; height: 100px; margin-right: 10px"
-             />
+        <div class="detail-row">
+          <span class="label">用户：</span>
+          <span class="value">{{ currentFeedback.nickname }}</span>
+        </div>
+        <div class="detail-row" v-if="currentFeedback.type">
+          <span class="label">问题类型：</span>
+          <el-tag type="primary" effect="plain">{{ currentFeedback.type }}</el-tag>
+        </div>
+        <div class="detail-row" v-if="currentFeedback.contact">
+          <span class="label">联系方式：</span>
+          <span class="value">{{ currentFeedback.contact }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">时间：</span>
+          <span class="value">{{ currentFeedback.createTime ? currentFeedback.createTime.replace('T', ' ') : '' }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">内容：</span>
+          <div class="content-box">{{ currentFeedback.content }}</div>
         </div>
       </div>
-      
+
       <div class="reply-section" style="margin-top: 20px">
         <p><strong>回复：</strong></p>
         <el-input
@@ -104,9 +124,9 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="replyDialogVisible = false">关闭</el-button>
-          <el-button 
-            type="primary" 
-            @click="submitReply" 
+          <el-button
+            type="primary"
+            @click="submitReply"
             v-if="currentFeedback?.status !== 1"
             :loading="submitting"
           >
@@ -120,9 +140,9 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { Search } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
-import { getFeedbackList, replyFeedback } from '@/api/feedback'
+import { Search, Delete } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { getFeedbackList, replyFeedback, batchDeleteFeedback } from '@/api/feedback'
 
 const loading = ref(false)
 const feedbackList = ref([])
@@ -131,33 +151,12 @@ const pageNum = ref(1)
 const pageSize = ref(10)
 const keyword = ref('')
 const filterStatus = ref('')
+const selectedRows = ref([])
 
 const replyDialogVisible = ref(false)
 const currentFeedback = ref(null)
 const replyContent = ref('')
 const submitting = ref(false)
-
-const getFeedbackTypeTag = (type) => {
-  const map = {
-    'bug': 'danger',
-    'suggestion': 'primary',
-    'complaint': 'warning',
-    'other': 'info'
-  }
-  // If type is not in map, maybe it is a number or Chinese? 
-  // Assuming type is string for now, or default to info
-  return map[type] || 'info'
-}
-
-const getFeedbackTypeText = (type) => {
-  const map = {
-    'bug': '系统缺陷',
-    'suggestion': '功能建议',
-    'complaint': '投诉举报',
-    'other': '其他'
-  }
-  return map[type] || '其他'
-}
 
 const fetchFeedbacks = async () => {
   loading.value = true
@@ -227,6 +226,38 @@ const submitReply = async () => {
   }
 }
 
+const handleSelectionChange = (selection) => {
+  selectedRows.value = selection
+}
+
+const handleBatchDelete = async () => {
+  if (selectedRows.value.length === 0) {
+    ElMessage.warning('请先选择要删除的反馈')
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除选中的 ${selectedRows.value.length} 条反馈吗？`,
+      '批量删除确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+
+    const ids = selectedRows.value.map(row => row.id)
+    await batchDeleteFeedback(ids)
+    ElMessage.success('删除成功')
+    fetchFeedbacks()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('删除失败')
+    }
+  }
+}
+
 onMounted(() => {
   fetchFeedbacks()
 })
@@ -263,9 +294,51 @@ onMounted(() => {
   white-space: pre-wrap;
 }
 
-.images-box {
-  margin-top: 10px;
+.feedback-detail {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detail-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.detail-row .label {
+  color: #606266;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.detail-row .value {
+  color: #303133;
+  font-size: 14px;
+}
+
+.image-preview {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+}
+
+.table-image {
+  width: 50px;
+  height: 50px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.image-count {
+  position: absolute;
+  right: -8px;
+  top: -4px;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  font-size: 10px;
+  padding: 2px 4px;
+  border-radius: 4px;
 }
 </style>

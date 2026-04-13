@@ -18,7 +18,13 @@
             <template #default="{ row }">
                 <div class="material-info" v-if="row.material">
                 <div class="thumb-wrapper">
-                    <img :src="row.material.coverImg || 'https://placeholder.co/100x100?text=Material'" class="thumb" />
+                    <el-image
+                      :src="row.material.coverImg || 'https://placehold.co/100x100?text=Material'"
+                      :preview-src-list="[row.material.coverImg]"
+                      fit="cover"
+                      :preview-teleported="true"
+                      class="thumb"
+                    />
                 </div>
                 <div class="info">
                     <div class="name" @click="$router.push(`/materials/${row.material.id}`)">{{ row.material.name }}</div>

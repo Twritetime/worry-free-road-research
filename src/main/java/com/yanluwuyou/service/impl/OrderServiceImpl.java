@@ -113,11 +113,13 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public OrderDTO getByOrderNo(String orderNo) {
         Order order = this.getOne(new LambdaQueryWrapper<Order>().eq(Order::getOrderNo, orderNo));
         if (order == null) {
             return null;
         }
+        refreshOrderStatus(order);
         OrderDTO orderDTO = new OrderDTO();
         BeanUtils.copyProperties(order, orderDTO);
         List<OrderItem> items = orderItemMapper.selectList(new LambdaQueryWrapper<OrderItem>().eq(OrderItem::getOrderId, order.getId()));
@@ -126,10 +128,15 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public List<OrderDTO> getUserOrders(Long userId) {
         List<Order> orders = this.list(new LambdaQueryWrapper<Order>()
                 .eq(Order::getUserId, userId)
                 .orderByDesc(Order::getCreateTime));
+
+        for (Order order : orders) {
+            refreshOrderStatus(order);
+        }
         
         return orders.stream().map(order -> {
             OrderDTO dto = new OrderDTO();
@@ -222,6 +229,17 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         return null;
     }
 
+    private void refreshOrderStatus(Order order) {
+        if (order.getStatus() == null || order.getStatus() != 0) {
+            return;
+        }
+        String tradeStatus = queryTradeStatus(order.getOrderNo());
+        if ("TRADE_SUCCESS".equals(tradeStatus) || "TRADE_FINISHED".equals(tradeStatus)) {
+            updateOrderStatus(order.getId(), 1);
+            order.setStatus(1);
+        }
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean handleAlipayNotify(Map<String, String> params) {
@@ -309,16 +327,15 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
 
     @Override
     public boolean checkPurchased(Long userId, Long materialId) {
-        // 查询用户的所有已付款订单
-        List<Order> paidOrders = this.list(new LambdaQueryWrapper<Order>()
+        List<Order> deliveredOrders = this.list(new LambdaQueryWrapper<Order>()
                 .eq(Order::getUserId, userId)
-                .eq(Order::getStatus, 1)); // 1: 已付款
+                .eq(Order::getStatus, 3));
 
-        if (paidOrders.isEmpty()) {
+        if (deliveredOrders.isEmpty()) {
             return false;
         }
 
-        List<Long> orderIds = paidOrders.stream().map(Order::getId).collect(Collectors.toList());
+        List<Long> orderIds = deliveredOrders.stream().map(Order::getId).collect(Collectors.toList());
 
         // 查询这些订单中是否包含该资料
         Long count = orderItemMapper.selectCount(new LambdaQueryWrapper<OrderItem>()

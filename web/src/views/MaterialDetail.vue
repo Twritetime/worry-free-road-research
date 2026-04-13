@@ -11,7 +11,14 @@
     <div class="detail-content" v-if="material.id">
       <div class="product-showcase">
          <div class="product-image-box">
-             <img :src="material.coverImg || 'https://placehold.co/400x500?text=Material'" class="product-image" />
+             <el-image
+               :src="material.coverImg || 'https://placehold.co/400x500?text=Material'"
+               :preview-src-list="[material.coverImg]"
+               fit="cover"
+               :preview-teleported="true"
+               class="product-image"
+               style="width: 100%; height: 100%"
+             />
          </div>
          <div class="product-info-box">
              <div class="product-header">
@@ -36,7 +43,7 @@
                 </div>
                 <div class="spec-row">
                     <span class="spec-label">发货方式</span>
-                    <span class="spec-value">自动发货 · 立即下载</span>
+                    <span class="spec-value">管理员手动发货</span>
                 </div>
              </div>
 
@@ -46,6 +53,9 @@
                 <div v-if="hasPurchased" class="purchased-state">
                     <el-alert title="您已购买此资料，可直接下载" type="success" :closable="false" show-icon style="margin-bottom: 20px;" />
                     <el-button type="success" size="large" :icon="Download" class="action-btn full-width" @click="handleDownload">立即下载</el-button>
+                </div>
+                <div v-else-if="pendingShipment" class="buying-state">
+                     <el-alert title="您已完成支付，等待管理员发货后可下载" type="info" :closable="false" show-icon />
                 </div>
                 <div v-else-if="material.stock <= 0" class="buying-state">
                      <el-alert title="该资料暂时缺货" type="warning" :closable="false" show-icon />
@@ -89,13 +99,12 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getMaterialById } from '@/api/material'
-import { addToCart, createOrder, checkPurchased } from '@/api/trade'
+import { addToCart, createOrder, getOrderList } from '@/api/trade'
 import { toggleFavorite, checkFavorite } from '@/api/favorite'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import { storeToRefs } from 'pinia'
-import { ArrowRight, Download, ShoppingCart, Star, StarFilled } from '@element-plus/icons-vue'
-import axios from 'axios'
+import { Download, ShoppingCart, Star, StarFilled } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -106,7 +115,9 @@ const loading = ref(false)
 const material = ref({})
 const quantity = ref(1)
 const hasPurchased = ref(false)
+const pendingShipment = ref(false)
 const isFavorite = ref(false)
+const autoDownloadTriggered = ref(false)
 
 const categoryMap = {
   'public': '公共课',
@@ -138,9 +149,6 @@ const fetchMaterialDetail = async (id) => {
       material.value = res
       if (user.value.id) {
           checkPurchasedStatus(id)
-          // Ideally check favorite status too, but we might need an API for that
-          // For now assume false or fetch favorites list.
-          // Let's try to fetch user favorites and check
           checkFavoriteStatus(id)
       }
     }
@@ -154,8 +162,17 @@ const fetchMaterialDetail = async (id) => {
 
 const checkPurchasedStatus = async (materialId) => {
     try {
-        const res = await checkPurchased(user.value.id, materialId)
-        hasPurchased.value = res
+        const orders = await getOrderList(user.value.id)
+        const matchedOrders = (orders || []).filter(order =>
+            (order.items || []).some(item => Number(item.materialId) === Number(materialId))
+        )
+        hasPurchased.value = matchedOrders.some(order => order.status === 3)
+        pendingShipment.value = !hasPurchased.value && matchedOrders.some(order => order.status === 1)
+        if (hasPurchased.value && material.value.fileUrl && !autoDownloadTriggered.value) {
+            autoDownloadTriggered.value = true
+            ElMessage.success('订单已发货，正在跳转下载链接')
+            window.location.assign(material.value.fileUrl)
+        }
     } catch (error) {
         console.error(error)
     }

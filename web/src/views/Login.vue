@@ -13,7 +13,7 @@
             <p class="branding-subtitle">汇聚海量真题、权威指南、活跃社区<br>助你轻松上岸，研途无忧</p>
           </div>
           <div class="branding-footer">
-            <span>© 2024 YanLuWuYou</span>
+            <span>© 2026 研路无忧</span>
           </div>
         </div>
         <div class="branding-bg-shape"></div>
@@ -57,7 +57,11 @@
           
           <div class="form-footer">
             <span>{{ isLogin ? '还没有账号？' : '已有账号？' }}</span>
-            <a href="javascript:void(0)" @click="toggleMode" class="toggle-link">{{ isLogin ? '立即注册' : '去登录' }}</a>
+            <button type="button" @click="toggleMode" class="toggle-link link-btn">{{ isLogin ? '立即注册' : '去登录' }}</button>
+          </div>
+          <div v-if="isLogin" class="form-footer admin-entry">
+            <span>后台管理入口：</span>
+            <button type="button" class="toggle-link link-btn" @click="goAdminLogin">管理员登录</button>
           </div>
         </el-form>
       </div>
@@ -124,6 +128,16 @@ const toggleMode = () => {
   }
 }
 
+const goAdminLogin = async () => {
+  try {
+    await router.push('/admin/login')
+  } catch {
+  }
+  if (route.path !== '/admin/login') {
+    window.location.assign('/admin/login')
+  }
+}
+
 const submitForm = async () => {
   if (!formRef.value) return
   await formRef.value.validate(async (valid) => {
@@ -133,13 +147,8 @@ const submitForm = async () => {
         if (isLogin.value) {
           const res = await login(form)
           ElMessage.success('登录成功')
-          userStore.setUser(res)
-          
-          if (userStore.isAdmin) {
-              router.push('/admin')
-          } else {
-              router.push('/')
-          }
+          userStore.setFrontUser(res)
+          router.push('/')
         } else {
           await register(form)
           ElMessage.success('注册成功，请登录')
@@ -154,6 +163,7 @@ const submitForm = async () => {
     }
   })
 }
+
 </script>
 
 <style scoped>
@@ -162,12 +172,10 @@ const submitForm = async () => {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: #f0f2f5;
-  background-image: 
-    radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.1) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.1) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.1) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, rgba(16, 185, 129, 0.1) 0px, transparent 50%);
+  background:
+    radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.22), transparent 42%),
+    radial-gradient(circle at 100% 100%, rgba(16, 185, 129, 0.2), transparent 45%),
+    linear-gradient(140deg, #eef5ff 0%, #f7fbff 50%, #edf8f4 100%);
   padding: 20px;
 }
 
@@ -176,7 +184,8 @@ const submitForm = async () => {
   width: 900px;
   max-width: 100%;
   height: 600px;
-  background: white;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
   border-radius: 20px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
   overflow: hidden;
@@ -308,11 +317,22 @@ const submitForm = async () => {
   color: var(--text-secondary);
 }
 
+.admin-entry {
+  margin-top: 8px;
+}
+
 .toggle-link {
   color: var(--primary-color);
   text-decoration: none;
   font-weight: 600;
   margin-left: 5px;
+}
+
+.link-btn {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
 }
 
 .toggle-link:hover {

@@ -19,7 +19,13 @@
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="coverImg" label="封面" width="100">
           <template #default="{ row }">
-            <el-image :src="row.coverImg" style="width: 50px; height: 50px" fit="cover" />
+            <el-image
+              :src="row.coverImg"
+              :preview-src-list="[row.coverImg]"
+              fit="cover"
+              style="width: 50px; height: 50px"
+              :preview-teleported="true"
+            />
           </template>
         </el-table-column>
         <el-table-column prop="name" label="资料名称" show-overflow-tooltip />
@@ -29,7 +35,14 @@
             <span style="color: #f56c6c">¥{{ row.price }}</span>
           </template>
         </el-table-column>
+        <el-table-column prop="originalPrice" label="划线价" width="100" />
+        <el-table-column prop="stock" label="库存" width="100" />
         <el-table-column prop="sales" label="销量" width="100" />
+        <el-table-column label="活动时间" width="220" show-overflow-tooltip>
+          <template #default="{ row }">
+            <span>{{ row.flashStartTime || '-' }} ~ {{ row.flashEndTime || '-' }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
             <el-switch
@@ -43,9 +56,11 @@
             />
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="150" fixed="right">
-          <template #default="{ row }">
+        <el-table-column label="操作" width="210" fixed="right">
+          <template #default="{ row, $index }">
             <el-button type="primary" link @click="handleEdit(row)">编辑</el-button>
+            <el-button type="warning" link :disabled="$index === 0" @click="handleMove($index, -1)">上移</el-button>
+            <el-button type="warning" link :disabled="$index === materialList.length - 1" @click="handleMove($index, 1)">下移</el-button>
             <el-button type="danger" link @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
@@ -79,6 +94,9 @@
         <el-form-item label="价格" prop="price">
           <el-input-number v-model="form.price" :precision="2" :step="1" :min="0" style="width: 100%" />
         </el-form-item>
+        <el-form-item label="划线价" prop="originalPrice">
+          <el-input-number v-model="form.originalPrice" :precision="2" :step="1" :min="0" style="width: 100%" />
+        </el-form-item>
         <el-form-item label="库存" prop="stock">
           <el-input-number v-model="form.stock" :step="1" :min="0" style="width: 100%" />
         </el-form-item>
@@ -91,12 +109,33 @@
         <el-form-item label="简介" prop="description">
           <el-input v-model="form.description" type="textarea" :rows="3" placeholder="请输入资料简介" />
         </el-form-item>
+        <el-form-item label="活动开始" prop="flashStartTime">
+          <el-date-picker
+            v-model="form.flashStartTime"
+            type="datetime"
+            value-format="YYYY-MM-DDTHH:mm:ss"
+            placeholder="选填"
+            style="width: 100%"
+          />
+        </el-form-item>
+        <el-form-item label="活动结束" prop="flashEndTime">
+          <el-date-picker
+            v-model="form.flashEndTime"
+            type="datetime"
+            value-format="YYYY-MM-DDTHH:mm:ss"
+            placeholder="选填"
+            style="width: 100%"
+          />
+        </el-form-item>
         <el-form-item label="封面" prop="coverImg">
           <el-upload
             class="avatar-uploader"
-            action="http://localhost:8080/file/upload"
+            action="#"
+            drag
+            :http-request="uploadRequest"
             :show-file-list="false"
             :on-success="handleCoverSuccess"
+            :on-error="handleCoverError"
             :before-upload="beforeCoverUpload"
           >
             <img v-if="form.coverImg" :src="form.coverImg" class="avatar" />
@@ -118,7 +157,8 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
-import { getMaterialListAll, saveMaterial, updateMaterial, deleteMaterial, updateMaterialStatus } from '@/api/material'
+import { getMaterialListAll, saveMaterial, updateMaterial, deleteMaterial, updateMaterialStatus, swapMaterialOrder } from '@/api/material'
+import request from '@/utils/request'
 
 const loading = ref(false)
 const materialList = ref([])
@@ -136,11 +176,14 @@ const form = reactive({
   name: '',
   category: '',
   price: 0,
+  originalPrice: 0,
   sales: 0,
   stock: 0,
   specs: '',
   description: '',
   coverImg: '',
+  flashStartTime: '',
+  flashEndTime: '',
   status: 1
 })
 
@@ -185,15 +228,45 @@ const handleStatusChange = async (row) => {
   }
 }
 
+const handleMove = async (index, offset) => {
+  const targetIndex = index + offset
+  if (targetIndex < 0 || targetIndex >= materialList.value.length) {
+    return
+  }
+  const current = materialList.value[index]
+  const target = materialList.value[targetIndex]
+  await swapMaterialOrder(current.id, target.id)
+  ElMessage.success('排序已更新')
+  fetchData()
+}
+
 const handleAdd = () => {
   dialogTitle.value = '新增资料'
-  Object.assign(form, { id: null, name: '', category: '', price: 0, sales: 0, stock: 0, specs: '', description: '', coverImg: '', status: 1 })
+  Object.assign(form, {
+    id: null,
+    name: '',
+    category: '',
+    price: 0,
+    originalPrice: 0,
+    sales: 0,
+    stock: 0,
+    specs: '',
+    description: '',
+    coverImg: '',
+    flashStartTime: '',
+    flashEndTime: '',
+    status: 1
+  })
   dialogVisible.value = true
 }
 
 const handleEdit = (row) => {
   dialogTitle.value = '编辑资料'
-  Object.assign(form, { ...row })
+  Object.assign(form, {
+    ...row,
+    flashStartTime: normalizeDateTime(row.flashStartTime),
+    flashEndTime: normalizeDateTime(row.flashEndTime)
+  })
   dialogVisible.value = true
 }
 
@@ -207,31 +280,84 @@ const handleDelete = (row) => {
   }).catch(() => {})
 }
 
+const uploadRequest = async (options) => {
+  const formData = new FormData()
+  formData.append('file', options.file)
+  try {
+    const res = await request.post('/file/upload', formData)
+    options.onSuccess(res)
+  } catch (error) {
+    options.onError(error)
+  }
+}
+
 const handleCoverSuccess = (res) => {
-  form.coverImg = res
+  if (typeof res === 'string') {
+    form.coverImg = res
+    return
+  }
+  if (res && typeof res.data === 'string') {
+    form.coverImg = res.data
+    return
+  }
+  if (res && typeof res.url === 'string') {
+    form.coverImg = res.url
+    return
+  }
+  ElMessage.error('封面上传失败')
+}
+
+const handleCoverError = () => {
+  ElMessage.error('封面上传失败')
 }
 
 const beforeCoverUpload = (file) => {
-  const isJPG = file.type === 'image/jpeg' || file.type === 'image/png';
+  const isImage = file.type.startsWith('image/');
   const isLt2M = file.size / 1024 / 1024 < 2;
 
-  if (!isJPG) {
-    ElMessage.error('上传头像图片只能是 JPG/PNG 格式!');
+  if (!isImage) {
+    ElMessage.error('上传封面只能是图片格式!');
   }
   if (!isLt2M) {
-    ElMessage.error('上传头像图片大小不能超过 2MB!');
+    ElMessage.error('上传封面图片大小不能超过 2MB!');
   }
-  return isJPG && isLt2M;
+  return isImage && isLt2M;
+}
+
+const normalizeCoverImg = (coverImg) => {
+  if (typeof coverImg === 'string') {
+    return coverImg
+  }
+  if (coverImg && typeof coverImg.url === 'string') {
+    return coverImg.url
+  }
+  if (coverImg && typeof coverImg.data === 'string') {
+    return coverImg.data
+  }
+  return ''
+}
+
+const normalizeDateTime = (time) => {
+  if (!time) {
+    return ''
+  }
+  return String(time).replace(' ', 'T')
 }
 
 const submitForm = () => {
   formRef.value.validate(async (valid) => {
     if (valid) {
+      const payload = {
+        ...form,
+        coverImg: normalizeCoverImg(form.coverImg),
+        flashStartTime: form.flashStartTime || null,
+        flashEndTime: form.flashEndTime || null
+      }
       if (form.id) {
-        await updateMaterial(form)
+        await updateMaterial(payload)
         ElMessage.success('修改成功')
       } else {
-        await saveMaterial(form)
+        await saveMaterial(payload)
         ElMessage.success('发布成功')
       }
       dialogVisible.value = false

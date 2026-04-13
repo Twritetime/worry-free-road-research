@@ -1,6 +1,8 @@
 package com.yanluwuyou.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.yanluwuyou.auth.AuthGuard;
+import com.yanluwuyou.auth.RequireLogin;
 import com.yanluwuyou.common.Result;
 import com.yanluwuyou.entity.CartItem;
 import com.yanluwuyou.service.CartItemService;
@@ -14,6 +16,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/cart")
+@RequireLogin
 public class CartItemController {
 
     @Autowired
@@ -24,6 +27,7 @@ public class CartItemController {
      */
     @GetMapping("/list")
     public Result<List<CartItem>> list(@RequestParam Long userId) {
+        AuthGuard.assertOwnerOrAdmin(userId);
         return Result.success(cartItemService.getUserCart(userId));
     }
 
@@ -32,6 +36,7 @@ public class CartItemController {
      */
     @PostMapping
     public Result<?> add(@RequestBody CartItem cartItem) {
+        cartItem.setUserId(AuthGuard.currentUserId());
         // 检查是否已存在
         CartItem exist = cartItemService.getOne(new LambdaQueryWrapper<CartItem>()
                 .eq(CartItem::getUserId, cartItem.getUserId())
@@ -51,6 +56,12 @@ public class CartItemController {
      */
     @PutMapping
     public Result<?> update(@RequestBody CartItem cartItem) {
+        CartItem origin = cartItemService.getById(cartItem.getId());
+        if (origin == null) {
+            return Result.error("购物车项不存在");
+        }
+        AuthGuard.assertOwnerOrAdmin(origin.getUserId());
+        cartItem.setUserId(origin.getUserId());
         cartItemService.updateById(cartItem);
         return Result.success();
     }
@@ -60,6 +71,11 @@ public class CartItemController {
      */
     @DeleteMapping("/{id}")
     public Result<?> delete(@PathVariable Long id) {
+        CartItem origin = cartItemService.getById(id);
+        if (origin == null) {
+            return Result.error("购物车项不存在");
+        }
+        AuthGuard.assertOwnerOrAdmin(origin.getUserId());
         cartItemService.removeById(id);
         return Result.success();
     }
@@ -69,6 +85,7 @@ public class CartItemController {
      */
     @DeleteMapping("/clear")
     public Result<?> clear(@RequestParam Long userId) {
+        AuthGuard.assertOwnerOrAdmin(userId);
         cartItemService.remove(new LambdaQueryWrapper<CartItem>().eq(CartItem::getUserId, userId));
         return Result.success();
     }

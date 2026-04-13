@@ -1,10 +1,13 @@
 package com.yanluwuyou.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+
+import java.time.LocalDateTime;
 
 /**
  * 用户实体类
@@ -55,4 +58,11 @@ public class User extends BaseEntity {
      * 角色: STUDENT, OPERATOR, ADMIN
      */
     private String role;
+
+    private Integer status;
+
+    private LocalDateTime lastLoginTime;
+
+    @TableField(exist = false)
+    private String token;
 }

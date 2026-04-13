@@ -1,32 +1,51 @@
 <template>
   <div class="user-list-container">
-    <div class="header">
+    <div class="toolbar">
       <h3>用户管理</h3>
-      <div class="actions">
-        <el-input
-          v-model="keyword"
-          placeholder="搜索用户名/昵称..."
-          class="search-input"
-          @keyup.enter="fetchUsers"
-        >
-          <template #append>
-            <el-button @click="fetchUsers">搜索</el-button>
-          </template>
-        </el-input>
+      <div class="filter-row">
+        <el-input v-model="filters.username" placeholder="用户名" clearable class="filter-item" />
+        <el-input v-model="filters.phone" placeholder="手机号" clearable class="filter-item" />
+        <el-date-picker
+          v-model="registerTimeRange"
+          type="datetimerange"
+          range-separator="至"
+          start-placeholder="注册开始时间"
+          end-placeholder="注册结束时间"
+          value-format="YYYY-MM-DD HH:mm:ss"
+          class="filter-item filter-date"
+          clearable
+        />
+        <el-select v-model="filters.status" placeholder="用户状态" clearable class="filter-item filter-status">
+          <el-option label="正常" :value="1" />
+          <el-option label="禁用" :value="0" />
+        </el-select>
+        <el-button type="primary" @click="handleSearch">查询</el-button>
+        <el-button @click="handleReset">重置</el-button>
       </div>
     </div>
 
     <el-table :data="userList" style="width: 100%" v-loading="loading">
       <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column prop="username" label="用户名" width="120" />
-      <el-table-column prop="nickname" label="昵称" width="120" />
-      <el-table-column prop="phone" label="手机号" width="120" />
+      <el-table-column label="头像" width="90">
+        <template #default="{ row }">
+          <el-avatar :size="36" :src="row.avatar || defaultAvatar" />
+        </template>
+      </el-table-column>
+      <el-table-column prop="username" label="用户名" width="140" />
+      <el-table-column prop="nickname" label="昵称" width="140" />
+      <el-table-column prop="phone" label="手机号" width="140" />
       <el-table-column prop="email" label="邮箱" min-width="150" />
       <el-table-column label="角色" width="120">
         <template #default="{ row }">
           <el-tag :type="getRoleTag(row.role)">{{ getRoleText(row.role) }}</el-tag>
         </template>
       </el-table-column>
+      <el-table-column label="状态" width="110">
+        <template #default="{ row }">
+          <el-tag :type="getStatusTag(row.status)">{{ getStatusText(row.status) }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column prop="lastLoginTime" label="最后登录时间" width="180" />
       <el-table-column prop="createTime" label="注册时间" width="180" />
       <el-table-column label="操作" width="150">
         <template #default="{ row }">
@@ -69,6 +88,12 @@
                <el-option label="管理员" value="ADMIN"></el-option>
            </el-select>
         </el-form-item>
+        <el-form-item label="状态">
+          <el-select v-model="form.status">
+            <el-option label="正常" :value="1"></el-option>
+            <el-option label="禁用" :value="0"></el-option>
+          </el-select>
+        </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
@@ -85,14 +110,20 @@ import { ref, reactive, onMounted } from 'vue'
 import { getUserList, deleteUser, updateUser } from '@/api/user'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
+const defaultAvatar = 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
 const userList = ref([])
 const loading = ref(false)
-const keyword = ref('')
 const pageNum = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 const dialogVisible = ref(false)
 const form = reactive({})
+const filters = reactive({
+  username: '',
+  phone: '',
+  status: undefined
+})
+const registerTimeRange = ref([])
 
 const getRoleText = (role) => {
     const map = {
@@ -112,13 +143,33 @@ const getRoleTag = (role) => {
     return map[role] || 'primary'
 }
 
+const getStatusText = (status) => {
+  const map = {
+    1: '正常',
+    0: '禁用'
+  }
+  return map[status] || '正常'
+}
+
+const getStatusTag = (status) => {
+  const map = {
+    1: 'success',
+    0: 'danger'
+  }
+  return map[status] || 'info'
+}
+
 const fetchUsers = async () => {
   loading.value = true
   try {
       const res = await getUserList({
           pageNum: pageNum.value,
           pageSize: pageSize.value,
-          keyword: keyword.value
+          username: filters.username || undefined,
+          phone: filters.phone || undefined,
+          status: filters.status,
+          registerStartTime: registerTimeRange.value?.[0],
+          registerEndTime: registerTimeRange.value?.[1]
       })
       userList.value = res.records
       total.value = res.total
@@ -129,6 +180,20 @@ const fetchUsers = async () => {
 
 const handlePageChange = (val) => {
   pageNum.value = val
+  fetchUsers()
+}
+
+const handleSearch = () => {
+  pageNum.value = 1
+  fetchUsers()
+}
+
+const handleReset = () => {
+  filters.username = ''
+  filters.phone = ''
+  filters.status = undefined
+  registerTimeRange.value = []
+  pageNum.value = 1
   fetchUsers()
 }
 
@@ -163,14 +228,28 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.header {
+.toolbar {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  gap: 16px;
   margin-bottom: 20px;
 }
-.search-input {
-  width: 300px;
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.filter-item {
+  width: 150px;
+}
+.filter-date {
+  width: 360px;
+}
+.filter-status {
+  width: 120px;
 }
 .pagination {
   margin-top: 20px;

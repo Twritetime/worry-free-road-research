@@ -60,6 +60,14 @@ export const updateGuideStatus = (id, status) => {
     })
 }
 
+export const swapGuideOrder = (id, swapId) => {
+    return request({
+        url: '/guide/swap-order',
+        method: 'put',
+        params: { id, swapId }
+    })
+}
+
 // 爬取指南
 export const crawlGuides = (url, category) => {
     return request({

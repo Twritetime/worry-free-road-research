@@ -26,8 +26,8 @@ public class FileController {
     @Value("${files.upload.path}")
     private String fileUploadPath;
 
-    @PostMapping("/upload")
-    public Result<String> upload(@RequestParam MultipartFile file) throws IOException {
+    @PostMapping(value = "/upload", consumes = "multipart/form-data")
+    public Result<String> upload(@RequestParam("file") MultipartFile file) throws IOException {
         String originalFilename = file.getOriginalFilename();
         String type = FileUtil.extName(originalFilename);
         long size = file.getSize();

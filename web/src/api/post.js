@@ -67,3 +67,10 @@ export const toggleTop = (id, isTop) => {
         method: 'put'
     })
 }
+
+export const likePost = (id) => {
+    return request({
+        url: `/post/${id}/like`,
+        method: 'post'
+    })
+}

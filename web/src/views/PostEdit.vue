@@ -21,13 +21,21 @@
         </el-form-item>
         
         <el-form-item label="内容" prop="content">
-          <el-input 
-            v-model="form.content" 
-            type="textarea" 
-            :rows="15" 
-            placeholder="请输入帖子详细内容..."
-            resize="none"
-          ></el-input>
+          <div style="border: 1px solid #ccc; width: 100%">
+            <Toolbar
+              style="border-bottom: 1px solid #ccc"
+              :editor="editorRef"
+              :defaultConfig="toolbarConfig"
+              mode="default"
+            />
+            <Editor
+              style="height: 400px; overflow-y: hidden;"
+              v-model="form.content"
+              :defaultConfig="editorConfig"
+              mode="default"
+              @onCreated="handleCreated"
+            />
+          </div>
         </el-form-item>
         
         <div class="form-actions">
@@ -42,7 +50,9 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import '@wangeditor/editor/dist/css/style.css' // 引入 css
+import { ref, reactive, onMounted, onBeforeUnmount, shallowRef, computed } from 'vue'
+import { Editor, Toolbar } from '@wangeditor/editor-for-vue'
 import { useRouter, useRoute } from 'vue-router'
 import { createPost, updatePost, getPostById } from '@/api/post'
 import { ElMessage } from 'element-plus'
@@ -54,17 +64,33 @@ const route = useRoute()
 const userStore = useUserStore()
 const { user, isAdmin } = storeToRefs(userStore)
 
-const formRef = ref(null)
-const loading = ref(false)
-const postId = ref(null)
-
-const isEdit = computed(() => !!postId.value)
-
+// 编辑器实例，必须用 shallowRef
+const editorRef = shallowRef()
+// 内容 HTML
 const form = reactive({
     title: '',
     content: '',
     category: 1
 })
+const toolbarConfig = {}
+const editorConfig = { placeholder: '请输入帖子详细内容...' }
+
+// 组件销毁时，也及时销毁编辑器
+onBeforeUnmount(() => {
+    const editor = editorRef.value
+    if (editor == null) return
+    editor.destroy()
+})
+
+const handleCreated = (editor) => {
+  editorRef.value = editor // 记录 editor 实例，重要！
+}
+
+const formRef = ref(null)
+const loading = ref(false)
+const postId = ref(null)
+
+const isEdit = computed(() => !!postId.value)
 
 const rules = {
     title: [

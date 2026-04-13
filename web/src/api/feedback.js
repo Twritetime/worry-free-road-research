@@ -23,3 +23,11 @@ export function replyFeedback(data) {
         data
     })
 }
+
+export function batchDeleteFeedback(ids) {
+    return request({
+        url: '/feedback/batch',
+        method: 'delete',
+        data: ids
+    })
+}

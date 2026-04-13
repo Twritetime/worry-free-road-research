@@ -9,6 +9,14 @@ export const getMaterialList = (params) => {
     })
 }
 
+export const getFlashMaterialList = (limit = 6) => {
+    return request({
+        url: '/material/flash-list',
+        method: 'get',
+        params: { limit }
+    })
+}
+
 // 根据ID获取资料详情
 export const getMaterialById = (id) => {
     return request({
@@ -57,5 +65,13 @@ export const updateMaterialStatus = (id, status) => {
     return request({
         url: `/material/${id}/status/${status}`,
         method: 'put'
+    })
+}
+
+export const swapMaterialOrder = (id, swapId) => {
+    return request({
+        url: '/material/swap-order',
+        method: 'put',
+        params: { id, swapId }
     })
 }

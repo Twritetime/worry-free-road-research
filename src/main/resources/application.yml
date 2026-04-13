@@ -9,6 +9,10 @@ spring:
     url: jdbc:mysql://localhost:3306/yanluwuyou?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
     username: root
     password: root
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
   # mvc:
   #   pathmatch:
   #     matching-strategy: ant_path_matcher
@@ -21,6 +25,11 @@ mybatis-plus:
 files:
   upload:
     path: ${user.dir}/files/
+
+auth:
+  token:
+    secret: worry-free-road-research-auth-secret-2026
+    expire-hours: 72
 
 alipay:
   appId: 9021000162609598

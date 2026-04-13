@@ -1,15 +1,20 @@
 <script setup>
 import NavBar from '@/components/NavBar.vue'
 import Footer from '@/components/Footer.vue'
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+const isAdminLayout = computed(() => route.path.startsWith('/admin'))
 </script>
 
 <template>
   <div class="app-container">
-    <NavBar />
+    <NavBar v-if="!isAdminLayout" />
     <div class="main-content">
       <router-view></router-view>
     </div>
-    <Footer />
+    <Footer v-if="!isAdminLayout" />
   </div>
 </template>
 
@@ -44,8 +49,7 @@ body {
 .order-container,
 .material-detail-container,
 .guide-detail-container,
-.news-detail-container,
-.home-container {
+.news-detail-container {
     max-width: 1200px !important;
     margin: 30px auto !important;
     padding: 0 20px !important;

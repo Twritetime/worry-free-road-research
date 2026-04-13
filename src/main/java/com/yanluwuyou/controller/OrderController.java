@@ -4,6 +4,9 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.yanluwuyou.auth.AuthGuard;
+import com.yanluwuyou.auth.RequireLogin;
+import com.yanluwuyou.auth.RequireRoles;
 import com.yanluwuyou.common.Result;
 import com.yanluwuyou.dto.OrderCreateDTO;
 import com.yanluwuyou.dto.OrderDTO;
@@ -46,20 +49,29 @@ public class OrderController {
      * 创建订单
      */
     @PostMapping("/create")
+    @RequireLogin
     public Result<OrderDTO> create(@RequestBody OrderCreateDTO orderCreateDTO) {
+        orderCreateDTO.setUserId(AuthGuard.currentUserId());
         return Result.success(orderService.createOrder(orderCreateDTO));
     }
 
     @GetMapping("/by-no/{orderNo}")
+    @RequireLogin
     public Result<OrderDTO> getByOrderNo(@PathVariable String orderNo) {
-        return Result.success(orderService.getByOrderNo(orderNo));
+        OrderDTO order = orderService.getByOrderNo(orderNo);
+        if (order != null) {
+            AuthGuard.assertOwnerOrAdmin(order.getUserId());
+        }
+        return Result.success(order);
     }
 
     /**
      * 获取用户订单
      */
     @GetMapping("/list")
+    @RequireLogin
     public Result<List<OrderDTO>> list(@RequestParam Long userId) {
+        AuthGuard.assertOwnerOrAdmin(userId);
         return Result.success(orderService.getUserOrders(userId));
     }
 
@@ -67,6 +79,7 @@ public class OrderController {
      * 获取所有订单列表 (管理端)
      */
     @GetMapping("/list-all")
+    @RequireRoles(User.ROLE_ADMIN)
     public Result<Page<OrderDTO>> listAll(@RequestParam(defaultValue = "1") Integer pageNum,
                                        @RequestParam(defaultValue = "10") Integer pageSize,
                                        @RequestParam(required = false) String keyword,
@@ -108,14 +121,20 @@ public class OrderController {
      * 支付订单
      */
     @PostMapping("/pay/{id}")
+    @RequireLogin
     public Result<String> pay(@PathVariable Long id) {
+        Order order = orderService.getById(id);
+        if (order == null) {
+            return Result.error("订单不存在");
+        }
+        AuthGuard.assertOwnerOrAdmin(order.getUserId());
         try {
             return Result.success(orderService.payOrder(id));
         } catch (RuntimeException e) {
             if ("订单已支付".equals(e.getMessage())) {
                 // 如果是“订单已支付”异常，我们手动触发一次状态更新（这里不依赖事务回滚）
-                Order order = orderService.getById(id);
-                if (order != null && order.getStatus() == 0) {
+                Order orderInDb = orderService.getById(id);
+                if (orderInDb != null && orderInDb.getStatus() == 0) {
                     orderService.updateOrderStatus(id, 1);
                 }
             }
@@ -155,6 +174,7 @@ public class OrderController {
      * 更新订单状态 (管理端)
      */
     @PutMapping("/{id}/status/{status}")
+    @RequireRoles(User.ROLE_ADMIN)
     public Result<?> updateStatus(@PathVariable Long id, @PathVariable Integer status) {
         try {
             orderService.updateOrderStatus(id, status);
@@ -168,11 +188,13 @@ public class OrderController {
      * 取消订单
      */
     @PostMapping("/cancel/{id}")
+    @RequireLogin
     public Result<?> cancel(@PathVariable Long id) {
         Order order = orderService.getById(id);
         if (order == null) {
             return Result.error("订单不存在");
         }
+        AuthGuard.assertOwnerOrAdmin(order.getUserId());
         // 只有待付款状态可以取消
         if (order.getStatus() != 0) {
             return Result.error("当前状态无法取消");
@@ -186,7 +208,9 @@ public class OrderController {
      * 检查是否已购买
      */
     @GetMapping("/check-purchased")
+    @RequireLogin
     public Result<Boolean> checkPurchased(@RequestParam Long userId, @RequestParam Long materialId) {
+        AuthGuard.assertOwnerOrAdmin(userId);
         return Result.success(orderService.checkPurchased(userId, materialId));
     }
 }

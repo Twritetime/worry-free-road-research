@@ -77,6 +77,12 @@ const fetchOrderDetail = async (orderNo) => {
 }
 
 const goToOrderList = () => {
+  const rawOrderNo = route.query.out_trade_no
+  const orderNo = Array.isArray(rawOrderNo) ? rawOrderNo[0] : rawOrderNo
+  if (orderNo) {
+    router.push({ path: '/order/list', query: { out_trade_no: orderNo } })
+    return
+  }
   router.push('/order/list')
 }
 

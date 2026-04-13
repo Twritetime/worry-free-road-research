@@ -46,6 +46,13 @@
                 >
                   {{ isLiked ? '已点赞' : '点赞' }} ({{ post.likeCount || 0 }})
                 </el-button>
+                <el-button round size="large" :type="isFavorite ? 'warning' : 'default'" @click="handleToggleFavorite">
+                  <el-icon style="margin-right: 6px;">
+                    <StarFilled v-if="isFavorite" />
+                    <Star v-else />
+                  </el-icon>
+                  {{ isFavorite ? '已收藏' : '收藏帖子' }}
+                </el-button>
                 <el-button v-if="canEditPost" round size="large" icon="Edit" @click="handleEditPost">编辑</el-button>
                 <el-button v-if="canDeletePost" round size="large" type="danger" plain icon="Delete" @click="handleDeletePost">删除</el-button>
             </div>
@@ -150,12 +157,13 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getPostById, updatePost, deletePost } from '@/api/post'
+import { getPostById, likePost, deletePost } from '@/api/post'
 import { getComments, createComment, deleteComment } from '@/api/comment'
+import { toggleFavorite, checkFavorite } from '@/api/favorite'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import { storeToRefs } from 'pinia'
-import { View, ChatDotRound, Star, Edit, Delete, ArrowRight } from '@element-plus/icons-vue'
+import { View, ChatDotRound, Star, StarFilled, Edit, Delete, ArrowRight } from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
 
 const route = useRoute()
@@ -173,6 +181,7 @@ const pageNum = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 const isLiked = ref(false)
+const isFavorite = ref(false)
 const replyTo = ref(null) // { id, nickname }
 
 // Category Logic
@@ -232,11 +241,46 @@ const fetchPostDetail = async (id) => {
     try {
         const res = await getPostById(id)
         post.value = res || {}
+        if (currentUser.value?.id) {
+            await Promise.all([
+                checkLikeStatus(id),
+                checkFavoriteStatus(id)
+            ])
+        } else {
+            isLiked.value = false
+            isFavorite.value = false
+        }
     } catch (error) {
         console.error(error)
         ElMessage.error('获取帖子详情失败')
     } finally {
         loading.value = false
+    }
+}
+
+const checkLikeStatus = async (postId) => {
+    try {
+        const res = await checkFavorite({
+            userId: currentUser.value.id,
+            targetId: postId,
+            type: 5
+        })
+        isLiked.value = !!res
+    } catch (error) {
+        console.error(error)
+    }
+}
+
+const checkFavoriteStatus = async (postId) => {
+    try {
+        const res = await checkFavorite({
+            userId: currentUser.value.id,
+            targetId: postId,
+            type: 4
+        })
+        isFavorite.value = !!res
+    } catch (error) {
+        console.error(error)
     }
 }
 
@@ -259,7 +303,7 @@ const fetchComments = async (postId) => {
 }
 
 const handleLike = async () => {
-    if (!currentUser.value) {
+    if (!currentUser.value?.id) {
         ElMessage.warning('请先登录')
         router.push('/login')
         return
@@ -269,11 +313,30 @@ const handleLike = async () => {
         return
     }
     try {
-        const newPost = { ...post.value, likeCount: (post.value.likeCount || 0) + 1 }
-        await updatePost(newPost)
-        post.value.likeCount++
+        await likePost(post.value.id)
+        post.value.likeCount = (post.value.likeCount || 0) + 1
         isLiked.value = true
         ElMessage.success('点赞成功')
+    } catch (error) {
+        ElMessage.error('操作失败')
+    }
+}
+
+const handleToggleFavorite = async () => {
+    if (!currentUser.value?.id) {
+        ElMessage.warning('请先登录')
+        router.push('/login')
+        return
+    }
+    try {
+        await toggleFavorite({
+            userId: currentUser.value.id,
+            targetId: post.value.id,
+            targetType: 4,
+            targetTitle: post.value.title
+        })
+        isFavorite.value = !isFavorite.value
+        ElMessage.success(isFavorite.value ? '已收藏' : '已取消收藏')
     } catch (error) {
         ElMessage.error('操作失败')
     }
@@ -346,7 +409,7 @@ const submitComment = async () => {
         return
     }
     
-    if (!currentUser.value) {
+    if (!currentUser.value?.id) {
         ElMessage.warning('请先登录')
         router.push('/login')
         return

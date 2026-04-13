@@ -3,6 +3,9 @@ package com.yanluwuyou.controller;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.yanluwuyou.auth.AuthGuard;
+import com.yanluwuyou.auth.RequireLogin;
+import com.yanluwuyou.auth.RequireRoles;
 import com.yanluwuyou.common.Result;
 import com.yanluwuyou.entity.Feedback;
 import com.yanluwuyou.entity.User;
@@ -18,6 +21,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/feedback")
+@RequireLogin
 public class FeedbackController {
 
     @Autowired
@@ -32,6 +36,10 @@ public class FeedbackController {
                                        @RequestParam(required = false) Integer status,
                                        @RequestParam(defaultValue = "1") Integer pageNum,
                                        @RequestParam(defaultValue = "10") Integer pageSize) {
+        if (!AuthGuard.isAdminOrOperator()) {
+            userId = AuthGuard.currentUserId();
+            status = null;
+        }
         Page<Feedback> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<Feedback> query = new LambdaQueryWrapper<>();
         if (userId != null) {
@@ -64,12 +72,12 @@ public class FeedbackController {
                 }
             }
         }
-        
         return Result.success(result);
     }
 
     @PostMapping
     public Result<?> save(@RequestBody Feedback feedback) {
+        feedback.setUserId(AuthGuard.currentUserId());
         feedback.setStatus(0); // Pending
         feedbackService.save(feedback);
         return Result.success();
@@ -77,6 +85,7 @@ public class FeedbackController {
     
     // For admin to reply
     @PutMapping("/reply")
+    @RequireRoles({User.ROLE_ADMIN, User.ROLE_OPERATOR})
     public Result<?> reply(@RequestBody Feedback feedback) {
         Feedback exist = feedbackService.getById(feedback.getId());
         if (exist == null) {
@@ -86,6 +95,16 @@ public class FeedbackController {
         exist.setStatus(1); // Replied
         exist.setReplyTime(LocalDateTime.now());
         feedbackService.updateById(exist);
+        return Result.success();
+    }
+
+    @DeleteMapping("/batch")
+    @RequireRoles({User.ROLE_ADMIN, User.ROLE_OPERATOR})
+    public Result<?> batchDelete(@RequestBody List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Result.error("请选择要删除的反馈");
+        }
+        feedbackService.removeByIds(ids);
         return Result.success();
     }
 }

@@ -59,3 +59,11 @@ export const updateNewsStatus = (id, status) => {
         method: 'put'
     })
 }
+
+export const swapNewsOrder = (id, swapId) => {
+    return request({
+        url: '/news/swap-order',
+        method: 'put',
+        params: { id, swapId }
+    })
+}

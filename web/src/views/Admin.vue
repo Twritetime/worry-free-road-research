@@ -50,6 +50,10 @@
         </el-menu>
       </el-aside>
       <el-main>
+        <div class="admin-topbar">
+          <span class="admin-name">{{ adminInfo.nickname || adminInfo.username || '管理员' }}</span>
+          <el-button size="small" @click="handleAdminLogout">退出后台</el-button>
+        </div>
         <router-view></router-view>
       </el-main>
     </el-container>
@@ -57,16 +61,22 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { DataLine, User, HomeFilled, Message, Files, Document, Compass, ChatLineSquare, Tickets } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { storeToRefs } from 'pinia'
 
+const router = useRouter()
 const route = useRoute()
 const activeMenu = computed(() => route.path)
 const userStore = useUserStore()
-const { canViewDashboard, canManageUsers, canManageOrders, canManageMaterials, canManageContent, canManageFeedback } = storeToRefs(userStore)
+const { canViewDashboard, canManageUsers, canManageOrders, canManageMaterials, canManageContent, canManageFeedback, adminInfo } = storeToRefs(userStore)
+
+const handleAdminLogout = () => {
+  userStore.logoutAdmin()
+  router.push('/admin/login')
+}
 </script>
 
 <style scoped>
@@ -90,5 +100,16 @@ const { canViewDashboard, canManageUsers, canManageOrders, canManageMaterials, c
 }
 .el-menu-vertical {
   border-right: none;
+}
+.admin-topbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.admin-name {
+  font-size: 14px;
+  color: #475569;
 }
 </style>

@@ -77,6 +77,24 @@
 
         <!-- List Content -->
         <div class="list-content" v-loading="loading">
+           <div class="sort-bar">
+              <div class="flex-spacer"></div>
+              <div class="sort-wrapper">
+                <span class="sort-label">排序：</span>
+                <el-select v-model="sortBy" size="default" style="width: 140px;" @change="handleSortChange">
+                  <el-option label="按发布时间" value="createTime" />
+                  <el-option label="按浏览量" value="viewCount" />
+                </el-select>
+                <el-button-group class="sort-order">
+                  <el-button :type="sortOrder === 'desc' ? 'primary' : 'default'" @click="handleSortOrderChange('desc')">
+                    <el-icon><SortDown /></el-icon>
+                  </el-button>
+                  <el-button :type="sortOrder === 'asc' ? 'primary' : 'default'" @click="handleSortOrderChange('asc')">
+                    <el-icon><SortUp /></el-icon>
+                  </el-button>
+                </el-button-group>
+              </div>
+           </div>
              <div v-for="item in guideList" :key="item.id" class="guide-card" @click="viewDetail(item.id)">
                 <div class="guide-icon-box" :class="item.category">
                     <el-icon><Document /></el-icon>
@@ -102,7 +120,7 @@
                     <el-button circle size="small" type="danger" :icon="Delete" @click="handleDelete(item)"></el-button>
                 </div>
              </div>
-             <el-empty v-if="!loading && guideList.length === 0" description="暂无指南" />
+             <el-empty v-if="!loading && guideList.length === 0" description="暂时没有相关信息" />
              
              <div class="pagination-wrapper">
                   <el-pagination
@@ -155,7 +173,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import { storeToRefs } from 'pinia'
-import { Search, Plus, Document, View, ArrowRight, Edit, Delete, Collection, Reading, List, Memo } from '@element-plus/icons-vue'
+import { Search, Plus, Document, View, ArrowRight, Edit, Delete, Collection, Reading, List, Memo, SortDown, SortUp } from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
 
 const router = useRouter()
@@ -170,6 +188,8 @@ const searchMajor = ref('')
 const institutions = ref([])
 const majors = ref([])
 const activeCategory = ref('all')
+const sortBy = ref('createTime')
+const sortOrder = ref('desc')
 const pageNum = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
@@ -219,7 +239,9 @@ const fetchGuides = async () => {
             keyword: keyword.value,
             institution: searchInstitution.value,
             major: searchMajor.value,
-            category: activeCategory.value === 'all' ? undefined : activeCategory.value
+            category: activeCategory.value === 'all' ? undefined : activeCategory.value,
+            sortBy: sortBy.value,
+            sortOrder: sortOrder.value
         }
         const res = await getGuideList(params)
         guideList.value = res.records || []
@@ -233,6 +255,17 @@ const fetchGuides = async () => {
 
 const handleCategoryChange = (key) => {
     activeCategory.value = key
+    pageNum.value = 1
+    fetchGuides()
+}
+
+const handleSortChange = () => {
+    pageNum.value = 1
+    fetchGuides()
+}
+
+const handleSortOrderChange = (order) => {
+    sortOrder.value = order
     pageNum.value = 1
     fetchGuides()
 }
@@ -441,6 +474,35 @@ const handleSubmit = async () => {
 
 .list-content {
     flex: 1;
+}
+
+.sort-bar {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.flex-spacer {
+    flex: 1;
+}
+
+.sort-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sort-label {
+    color: #606266;
+    font-size: 14px;
+}
+
+.sort-order {
+    margin-left: 4px;
 }
 
 .guide-card {

@@ -77,7 +77,10 @@ DROP TABLE IF EXISTS `feedback`;
 CREATE TABLE `feedback`  (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `user_id` bigint NOT NULL,
+  `type` varchar(50) NULL DEFAULT NULL COMMENT '问题类型',
+  `contact` varchar(255) NULL DEFAULT NULL COMMENT '联系方式',
   `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `images` text NULL DEFAULT NULL COMMENT '截图，多张用逗号分隔',
   `reply` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL,
   `status` int NULL DEFAULT 0 COMMENT '0: Pending, 1: Replied',
   `reply_time` datetime NULL DEFAULT NULL,
@@ -90,10 +93,10 @@ CREATE TABLE `feedback`  (
 -- ----------------------------
 -- Records of feedback
 -- ----------------------------
-INSERT INTO `feedback` VALUES (1, 2, '建议增加夜间模式，晚上看太亮了。', '1', 1, '2025-12-11 17:01:22', '2025-12-11 11:18:30', '2025-12-11 11:18:30', 0);
-INSERT INTO `feedback` VALUES (2, 3, '支付页面有时候会卡顿。', '收到，我们会尽快优化。', 1, '2025-12-11 11:18:30', '2025-12-11 11:18:30', '2025-12-11 11:18:30', 0);
-INSERT INTO `feedback` VALUES (3, 5, '1', NULL, 0, NULL, NULL, NULL, 0);
-INSERT INTO `feedback` VALUES (4, 3, '1', '1', 1, '2025-12-11 17:01:32', NULL, NULL, 0);
+INSERT INTO `feedback` VALUES (1, 2, NULL, NULL, '建议增加夜间模式，晚上看太亮了。', NULL, '1', 1, '2025-12-11 17:01:22', '2025-12-11 11:18:30', '2025-12-11 11:18:30', 0);
+INSERT INTO `feedback` VALUES (2, 3, NULL, NULL, '支付页面有时候会卡顿。', NULL, '收到，我们会尽快优化。', 1, '2025-12-11 11:18:30', '2025-12-11 11:18:30', '2025-12-11 11:18:30', 0);
+INSERT INTO `feedback` VALUES (3, 5, NULL, NULL, '1', NULL, NULL, 0, NULL, NULL, NULL, 0);
+INSERT INTO `feedback` VALUES (4, 3, NULL, NULL, '1', NULL, '1', 1, '2025-12-11 17:01:32', NULL, NULL, 0);
 
 -- ----------------------------
 -- Table structure for sys_user

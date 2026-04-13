@@ -31,6 +31,17 @@
 
          <div class="article-footer">
             <div class="actions">
+                <el-button
+                  round
+                  :type="isFavorited ? 'warning' : 'default'"
+                  @click="handleToggleFavorite"
+                >
+                  <el-icon style="margin-right: 6px;">
+                    <StarFilled v-if="isFavorited" />
+                    <Star v-else />
+                  </el-icon>
+                  {{ isFavorited ? '已收藏' : '收藏指南' }}
+                </el-button>
                 <el-button round @click="$router.back()">返回列表</el-button>
                 <el-button type="primary" round icon="Share" @click="handleShare">分享</el-button>
             </div>
@@ -44,7 +55,7 @@
           </div>
           
           <div class="comment-input-wrapper">
-              <div class="user-avatar" v-if="currentUser">
+              <div class="user-avatar" v-if="currentUser?.id">
                   <el-avatar :size="40" :src="currentUser.avatar || 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'" />
               </div>
               <div class="input-box">
@@ -124,8 +135,9 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getGuideById } from '@/api/guide'
 import { getComments, createComment, deleteComment } from '@/api/comment'
+import { toggleFavorite, checkFavorite } from '@/api/favorite'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Calendar, View, ArrowRight, Share, ChatDotRound } from '@element-plus/icons-vue'
+import { Calendar, View, ArrowRight, Share, ChatDotRound, Star, StarFilled } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { storeToRefs } from 'pinia'
 import dayjs from 'dayjs'
@@ -144,6 +156,7 @@ const commenting = ref(false)
 const pageNum = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
+const isFavorited = ref(false)
 const replyTo = ref(null) // { id, nickname }
 
 const categoryMap = {
@@ -166,11 +179,50 @@ const fetchGuideDetail = async (id) => {
     try {
         const res = await getGuideById(id)
         guide.value = res || {}
+        if (currentUser.value?.id) {
+            await checkFavoriteStatus(id)
+        } else {
+            isFavorited.value = false
+        }
     } catch (error) {
         console.error(error)
         ElMessage.error('获取指南详情失败')
     } finally {
         loading.value = false
+    }
+}
+
+const checkFavoriteStatus = async (id) => {
+    try {
+        const res = await checkFavorite({
+            userId: currentUser.value.id,
+            targetId: id,
+            type: 2
+        })
+        isFavorited.value = !!res
+    } catch (error) {
+        console.error(error)
+    }
+}
+
+const handleToggleFavorite = async () => {
+    if (!currentUser.value?.id) {
+        ElMessage.warning('请先登录')
+        router.push('/login')
+        return
+    }
+    try {
+        await toggleFavorite({
+            userId: currentUser.value.id,
+            targetId: guide.value.id,
+            targetType: 2,
+            targetTitle: guide.value.title
+        })
+        isFavorited.value = !isFavorited.value
+        ElMessage.success(isFavorited.value ? '已收藏' : '已取消收藏')
+    } catch (error) {
+        console.error(error)
+        ElMessage.error('操作失败')
     }
 }
 
@@ -198,7 +250,7 @@ const submitComment = async () => {
         return
     }
     
-    if (!currentUser.value) {
+    if (!currentUser.value?.id) {
         ElMessage.warning('请先登录')
         router.push('/login')
         return
@@ -283,13 +335,20 @@ const formatDate = (date) => {
 // Simple markdown rendering or just text formatting
 const renderContent = (content) => {
     if (!content) return ''
-    // If you have a markdown parser, use it here. 
-    // For now, we assume HTML or simple text. 
-    // We can replace newlines with <br> if it's plain text and not HTML
     if (!content.includes('<') && content.includes('\n')) {
         return content.replace(/\n/g, '<br>')
     }
-    return content
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(content, 'text/html')
+    doc.querySelectorAll('a').forEach((anchor) => {
+        anchor.setAttribute('target', '_blank')
+        anchor.setAttribute('rel', 'noopener noreferrer')
+    })
+    doc.querySelectorAll('img').forEach((img) => {
+        img.setAttribute('loading', 'lazy')
+        img.setAttribute('onerror', 'this.style.display="none"')
+    })
+    return doc.body.innerHTML
 }
 
 const handleShare = () => {

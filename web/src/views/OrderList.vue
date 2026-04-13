@@ -157,8 +157,9 @@ const handleReturn = () => {
 const getStatusTag = (status) => {
     const map = {
         0: 'warning',
-        1: 'success',
-        2: 'info'
+        1: 'primary',
+        2: 'info',
+        3: 'success'
     }
     return map[status] || 'info'
 }
@@ -167,7 +168,8 @@ const getStatusText = (status) => {
     const map = {
         0: '待付款',
         1: '已付款',
-        2: '已取消'
+        2: '已取消',
+        3: '已发货'
     }
     return map[status] || '未知状态'
 }

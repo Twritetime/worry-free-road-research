@@ -19,7 +19,7 @@
       </div>
     </div>
     <div class="copyright">
-      &copy; 2024 研路无忧. All Rights Reserved.
+      &copy; 2026 研路无忧. All Rights Reserved.
     </div>
   </div>
 </template>

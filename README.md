@@ -1,72 +1,77 @@
-# 研路无忧 - 考研服务平台
+# 研路无忧 (YanLuWuYou) - 考研服务平台
 
-[![Gitee Repo](https://img.shields.io/badge/Gitee-研路无忧-red)](https://gitee.com/Twritetime/worry-free-road-research)
+## 1. 项目简介
+“研路无忧”是一个基于 Spring Boot 和 Vue 3 开发的全栈考研服务平台。该平台旨在为考研学生提供一站式的服务，包括考研资讯、资料分享、交流论坛、在线商城（购买学习资料）以及反馈建议等功能。
 
-"研路无忧"是一个专注于考研服务的综合平台，旨在为考研学子提供一站式的备考资源和交流社区。
+## 2. 技术架构
 
-## 核心功能
+### 后端 (Backend)
+- **核心框架**: Spring Boot 3.2.0
+- **持久层框架**: MyBatis Plus 3.5.5
+- **数据库**: MySQL 8.0+
+- **工具类库**: Hutool (常用工具类), Lombok (简化代码), Fastjson (JSON处理)
+- **数据爬取**: Jsoup (用于获取最新考研资讯)
+- **API 文档**: Knife4j (OpenAPI 3)
+- **支付集成**: 支付宝 SDK (Alipay SDK)
+- **Java版本**: Java 17
 
-### 👨‍🎓 用户端
-- **资讯与指南**: 浏览考研动态、招生简章、考试大纲等。
-- **资料商城**: 购买公共课、专业课、复试资料，支持在线预览和下载。
-- **交流论坛**: 分类发帖（公共课/专业课/复试），互动评论，点赞收藏。
-- **个人中心**: 订单管理、收藏夹、地址管理、在线客服反馈。
+### 前端 (Frontend)
+- **构建工具**: Vite 5.0
+- **核心框架**: Vue.js 3.3
+- **状态管理**: Pinia 2.1
+- **路由管理**: Vue Router 4.2
+- **UI 组件库**: Element Plus 2.4
+- **网络请求**: Axios 1.6
 
-### 👨‍💼 管理端
-- **数据看板**: 销售统计、资料分类占比等可视化图表。
-- **内容管理**: 资讯、指南、资料、帖子的发布与审核（支持上下架、置顶）。
-- **用户与订单**: 用户管理、订单状态变更（支付/发货/退款）。
-- **反馈处理**: 回复用户咨询与建议。
+## 3. 主要功能
+- **用户系统**: 注册、登录、个人信息维护、收货地址管理。
+- **资讯中心**: 实时更新的考研动态与新闻。
+- **资料商城**: 浏览、搜索学习资料，支持购物车及支付宝模拟支付。
+- **交流论坛**: 发布帖子、发表评论、点赞收藏。
+- **备考指南**: 提供各科目的备考建议与经验分享。
+- **管理后台**: 对用户、帖子、资料、订单、反馈等进行统一管理。
 
-## 技术架构
+## 4. 目录结构
+```text
+worry-free-road-research/
+├── sql/                # 数据库初始化脚本
+├── src/                # 后端源代码
+│   ├── main/java/      # Java 业务代码
+│   └── main/resources/ # 配置文件及资源
+├── web/                # 前端源代码 (Vue 3 项目)
+│   ├── src/            # 前端业务逻辑
+│   └── public/         # 静态资源
+└── 材料/                # 项目相关文档（论文、任务书等）
+```
 
-- **后端**: Spring Boot 3.2 + MyBatis-Plus + MySQL 8.0
-- **前端**: Vue 3 + Element Plus + Pinia + ECharts
-- **工具**: Maven, Hutool, Knife4j (Swagger API文档)
+## 5. 快速开始
 
-## 快速开始
+### 5.1 环境准备
+- JDK 17
+- MySQL 8.0+
+- Node.js 18+
+- Maven 3.8+
 
-### 1. 数据库初始化
-本项目提供了一键初始化脚本，包含完整的表结构和演示数据。
+### 5.2 数据库配置
+1. 创建数据库 `yanluwuyou`。
+2. 运行 `sql/init.sql` 或 `sql/yanluwuyou.sql` 导入表结构和基础数据。
+3. 修改 `src/main/resources/application.yml` 中的数据库连接信息（用户名、密码）。
 
-1. 创建数据库 `yanluwuyou` (字符集 `utf8mb4`)。
-2. 执行脚本 `sql/init.sql`。
+### 5.3 后端启动
+1. 在根目录下执行 `mvn clean install`（或使用 IDE 导入）。
+2. 运行 `YanLuWuYouApplication.java`。
+3. 后端 API 文档访问地址：`http://localhost:8080/doc.html`。
 
-### 2. 后端启动
-1. 确保 JDK 17+ 和 Maven 3.6+ 已安装。
-2. 修改 `src/main/resources/application.yml` 中的数据库账号密码。
-3. 运行项目：
-   ```bash
-   mvn spring-boot:run
-   ```
-   服务地址: `http://localhost:8080`
-   API文档: `http://localhost:8080/doc.html`
-   
-   > **注意**: 文件上传默认存储在项目根目录的 `files/` 文件夹下。
+### 5.4 前端启动
+1. 进入 `web` 目录：`cd web`。
+2. 安装依赖：`npm install`。
+3. 启动项目：`npm run dev`。
+4. 访问地址：`http://localhost:5173`。
 
-### 3. 前端启动
-1. 确保 Node.js 16+ 已安装。
-2. 进入 `web` 目录并安装依赖：
-   ```bash
-   cd web
-   npm install
-   ```
-3. 启动开发服务器：
-   ```bash
-   npm run dev
-   ```
-   访问地址: `http://localhost:5173`
+## 6. 开发注意事项
+- **支付功能**: 目前配置为支付宝沙箱环境，如需测试请配置自己的沙箱参数。
+- **文件上传**: 上传的文件默认存储在项目根目录下的 `files/` 文件夹。
+- **跨域配置**: 后端已通过 `CorsConfig.java` 配置跨域支持。
 
-### 4. 支付宝支付重构 (最新更新)
-针对支付成功后的订单同步问题，本项目进行了深度重构：
-- **支付成功页面**: 新增 `/order/success` 独立页面，通过 URL 中的订单号即时从后端获取详情，解决了之前在列表页轮询导致白屏的问题。
-- **主动查询补偿**: 后端回调逻辑 (`handleAlipayNotify`) 增加了主动向支付宝查询状态的补偿机制，即使签名验证失败或异步通知延迟，也能通过主动查询确保订单状态准确。
-- **事务处理优化**: 修复了支付发起阶段状态更新因异常抛出导致的回滚问题，保证了支付链路的数据一致性。
-
-## 测试账号
-
-- **管理员**: `admin` / `123456`
-- **普通用户**: `user01` / `123456`
-
-## 项目地址
-[https://gitee.com/Twritetime/worry-free-road-research](https://gitee.com/Twritetime/worry-free-road-research)
+---
+*本项目为毕业设计作品。*

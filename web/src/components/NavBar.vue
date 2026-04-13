@@ -7,6 +7,7 @@
       </div>
       <div class="nav-menu">
           <router-link to="/" class="nav-link" :class="{ active: $route.path === '/' }">首页</router-link>
+          <router-link to="/news" class="nav-link" :class="{ active: $route.path.startsWith('/news') }">考研资讯</router-link>
           <router-link to="/materials" class="nav-link" :class="{ active: $route.path.startsWith('/materials') }">资料商城</router-link>
           <router-link to="/guides" class="nav-link" :class="{ active: $route.path.startsWith('/guides') }">报考指南</router-link>
           <router-link to="/forum" class="nav-link" :class="{ active: $route.path.startsWith('/forum') }">交流论坛</router-link>
@@ -21,7 +22,7 @@
             </span>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item v-if="hasAdminAccess" @click="$router.push('/admin')">后台管理</el-dropdown-item>
+                <el-dropdown-item v-if="canEnterAdmin" @click="$router.push('/admin')">后台管理</el-dropdown-item>
                 <el-dropdown-item @click="$router.push('/profile')">个人中心</el-dropdown-item>
                 <el-dropdown-item @click="$router.push('/cart')">购物车</el-dropdown-item>
                 <el-dropdown-item divided @click="logout">退出登录</el-dropdown-item>
@@ -39,6 +40,7 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { storeToRefs } from 'pinia'
@@ -47,7 +49,8 @@ import { School, ArrowDown } from '@element-plus/icons-vue'
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
-const { user, hasAdminAccess } = storeToRefs(userStore)
+const { user } = storeToRefs(userStore)
+const canEnterAdmin = computed(() => ['ADMIN', 'OPERATOR'].includes(user.value?.role))
 
 const logout = () => {
     userStore.logout()

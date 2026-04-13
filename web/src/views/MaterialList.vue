@@ -28,61 +28,127 @@
     </div>
 
     <div class="main-content">
-       <!-- Filter Tabs -->
        <div class="filter-bar">
           <div class="filter-tabs">
-            <div 
-                v-for="tab in tabs" 
-                :key="tab.name" 
-                class="filter-tab" 
+            <div
+                v-for="tab in tabs"
+                :key="tab.name"
+                class="filter-tab"
                 :class="{ active: activeCategory === tab.name }"
                 @click="handleCategoryChange(tab.name)"
             >
                 {{ tab.label }}
             </div>
           </div>
-           <div class="flex-spacer"></div>
-           <el-button v-if="isAdmin" type="primary" :icon="Plus" @click="openDialog()">发布资料</el-button>
+          <div class="flex-spacer"></div>
+          <el-button v-if="isAdmin" type="primary" :icon="Plus" @click="openDialog()">发布资料</el-button>
        </div>
 
-       <!-- Grid -->
-       <div class="material-grid" v-loading="loading">
-          <div v-for="item in materialList" :key="item.id" class="material-card" @click="viewDetail(item.id)">
-             <div class="card-image">
-                <img :src="item.coverImg || 'https://placehold.co/300x400?text=Material'" />
-                <div class="card-overlay">
-                   <el-button type="primary" round>查看详情</el-button>
+       <div class="sort-toolbar">
+          <span class="sort-label">排序</span>
+          <button
+            v-for="item in sortTabs"
+            :key="item.value"
+            type="button"
+            class="sort-item"
+            :class="{ active: sortField === item.value }"
+            @click="toggleSort(item.value)"
+          >
+            {{ item.label }}
+            <span class="sort-arrow">{{ getSortArrow(item.value) }}</span>
+          </button>
+       </div>
+
+       <div class="content-layout">
+          <div class="material-section">
+            <div class="material-grid" v-loading="loading">
+                <div v-for="item in materialList" :key="item.id" class="material-card" @click="viewDetail(item.id)">
+                  <div class="card-image">
+                      <el-image
+                        :src="item.coverImg || 'https://placehold.co/300x400?text=Material'"
+                        :preview-src-list="[item.coverImg]"
+                        fit="cover"
+                        :preview-teleported="true"
+                        class="material-img"
+                        @click.stop
+                      />
+                      <div class="card-overlay">
+                        <el-button type="primary" round>查看详情</el-button>
+                      </div>
+                  </div>
+                  <div class="card-content">
+                      <div class="card-tags">
+                        <el-tag size="small" :type="getCategoryType(item.category)" effect="light">{{ getCategoryLabel(item.category) }}</el-tag>
+                        <span class="stock-badge" v-if="item.stock < 10 && item.stock > 0">仅剩 {{ item.stock }} 份</span>
+                        <span class="stock-badge out" v-if="item.stock <= 0">已售罄</span>
+                      </div>
+                      <h3 class="card-title" :title="item.name">{{ item.name }}</h3>
+                      <div class="card-sales">销量 {{ item.sales || 0 }}</div>
+                      <div class="card-footer">
+                        <div class="price-wrap">
+                          <span class="price">¥ {{ formatPrice(item.price) }}</span>
+                          <span v-if="hasOriginalPrice(item)" class="origin-price">¥ {{ formatPrice(item.originalPrice) }}</span>
+                        </div>
+                        <span class="specs">{{ item.specs || 'PDF' }}</span>
+                      </div>
+                      <el-button
+                        class="add-cart-btn"
+                        type="warning"
+                        plain
+                        :disabled="item.stock <= 0"
+                        @click.stop="handleQuickAddToCart(item)"
+                      >
+                        加入购物车
+                      </el-button>
+                  </div>
+                    <div v-if="isAdmin" class="admin-actions" @click.stop>
+                        <el-button circle size="small" :icon="Edit" @click="openDialog(item)"></el-button>
+                        <el-button circle size="small" type="danger" :icon="Delete" @click="handleDelete(item.id)"></el-button>
+                    </div>
                 </div>
-             </div>
-             <div class="card-content">
-                <div class="card-tags">
-                   <el-tag size="small" :type="getCategoryType(item.category)" effect="light">{{ getCategoryLabel(item.category) }}</el-tag>
-                   <span class="stock-badge" v-if="item.stock < 10 && item.stock > 0">仅剩 {{ item.stock }} 份</span>
-                   <span class="stock-badge out" v-if="item.stock <= 0">已售罄</span>
-                </div>
-                <h3 class="card-title" :title="item.name">{{ item.name }}</h3>
-                <div class="card-footer">
-                   <span class="price">¥ {{ item.price }}</span>
-                   <span class="specs">{{ item.specs || 'PDF' }}</span>
-                </div>
-             </div>
-              <div v-if="isAdmin" class="admin-actions" @click.stop>
-                  <el-button circle size="small" :icon="Edit" @click="openDialog(item)"></el-button>
-                  <el-button circle size="small" type="danger" :icon="Delete" @click="handleDelete(item.id)"></el-button>
-              </div>
+            </div>
+            <el-empty v-if="!loading && materialList.length === 0" description="暂无相关资料" />
+            <div class="pagination-wrapper">
+                <el-pagination
+                  background
+                  layout="prev, pager, next"
+                  :total="total"
+                  :page-size="pageSize"
+                  @current-change="handlePageChange"
+                />
+            </div>
           </div>
-       </div>
-       <el-empty v-if="!loading && materialList.length === 0" description="暂无相关资料" />
-
-       <!-- Pagination -->
-       <div class="pagination-wrapper">
-          <el-pagination
-            background
-            layout="prev, pager, next"
-            :total="total"
-            :page-size="pageSize"
-            @current-change="handlePageChange"
-          />
+          <div class="flash-sidebar" v-if="flashSaleList.length">
+            <div class="flash-sale-section">
+                <div class="flash-header">
+                  <h3 class="flash-title">限时特惠</h3>
+                  <div class="flash-countdown">最近结束 {{ formatCountdown(flashRemainingSeconds) }}</div>
+                </div>
+                <div class="flash-grid">
+                  <div v-for="item in flashSaleList" :key="item.id" class="flash-card" @click="viewDetail(item.id)">
+                    <div class="flash-image">
+                      <el-image
+                        :src="item.coverImg || 'https://placehold.co/220x160?text=Material'"
+                        :preview-src-list="[item.coverImg]"
+                        fit="cover"
+                        :preview-teleported="true"
+                        class="material-img"
+                        @click.stop
+                      />
+                      <span class="discount-tag">{{ getDiscountText(item) }}</span>
+                    </div>
+                    <div class="flash-info">
+                      <h4 class="flash-name">{{ item.name }}</h4>
+                      <div class="flash-price-row">
+                        <span class="flash-price">¥{{ formatPrice(item.price) }}</span>
+                        <span class="flash-origin">¥{{ formatPrice(item.originalPrice) }}</span>
+                      </div>
+                      <div class="flash-item-countdown">剩余 {{ formatCountdown(getRemainingSeconds(item.flashEndTime)) }}</div>
+                    </div>
+                  </div>
+                </div>
+            </div>
+          </div>
        </div>
     </div>
 
@@ -118,13 +184,43 @@
                 </el-form-item>
             </el-col>
             <el-col :span="8">
+                <el-form-item label="划线价" prop="originalPrice">
+                  <el-input-number v-model="materialForm.originalPrice" :precision="2" :step="0.1" :min="0" style="width: 100%"></el-input-number>
+                </el-form-item>
+            </el-col>
+            <el-col :span="8">
                 <el-form-item label="库存" prop="stock">
                   <el-input-number v-model="materialForm.stock" :min="0" :precision="0" style="width: 100%"></el-input-number>
                 </el-form-item>
             </el-col>
+        </el-row>
+
+        <el-row :gutter="20">
             <el-col :span="8">
                 <el-form-item label="规格" prop="specs">
                     <el-input v-model="materialForm.specs" placeholder="例如: PDF"></el-input>
+                </el-form-item>
+            </el-col>
+            <el-col :span="8">
+                <el-form-item label="活动开始" prop="flashStartTime">
+                  <el-date-picker
+                    v-model="materialForm.flashStartTime"
+                    type="datetime"
+                    value-format="YYYY-MM-DDTHH:mm:ss"
+                    placeholder="选填"
+                    style="width: 100%"
+                  />
+                </el-form-item>
+            </el-col>
+            <el-col :span="8">
+                <el-form-item label="活动结束" prop="flashEndTime">
+                  <el-date-picker
+                    v-model="materialForm.flashEndTime"
+                    type="datetime"
+                    value-format="YYYY-MM-DDTHH:mm:ss"
+                    placeholder="选填"
+                    style="width: 100%"
+                  />
                 </el-form-item>
             </el-col>
         </el-row>
@@ -138,6 +234,7 @@
               <el-upload
                 class="avatar-uploader"
                 :action="uploadUrl"
+                drag
                 :show-file-list="false"
                 :on-success="handleCoverSuccess"
               >
@@ -181,8 +278,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive, watch } from 'vue'
-import { getMaterialList, saveMaterial, updateMaterial, deleteMaterial } from '@/api/material'
+import { ref, onMounted, reactive, watch, computed, onUnmounted } from 'vue'
+import { getMaterialList, getFlashMaterialList, saveMaterial, updateMaterial, deleteMaterial } from '@/api/material'
+import { addToCart } from '@/api/trade'
 import { useRouter, useRoute } from 'vue-router'
 import { Plus, Edit, Delete, Search, Upload, Document } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -192,9 +290,10 @@ import { storeToRefs } from 'pinia'
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
-const { isAdmin } = storeToRefs(userStore)
+const { isAdmin, user } = storeToRefs(userStore)
 
 const materialList = ref([])
+const flashMaterialList = ref([])
 const loading = ref(false)
 const keyword = ref('')
 const activeCategory = ref('all')
@@ -202,12 +301,21 @@ const pageNum = ref(1)
 const pageSize = ref(12)
 const total = ref(0)
 const uploadUrl = 'http://localhost:8080/file/upload'
+const sortField = ref('comprehensive')
+const sortOrder = ref('desc')
+const nowTimestamp = ref(Date.now())
+let countdownTimer = null
 
 const tabs = [
     { name: 'all', label: '全部资料' },
     { name: 'public', label: '公共课' },
     { name: 'major', label: '专业课' },
     { name: 'interview', label: '复试资料' }
+]
+const sortTabs = [
+    { value: 'comprehensive', label: '综合' },
+    { value: 'sales', label: '销量' },
+    { value: 'price', label: '价格' }
 ]
 
 // Dialog
@@ -219,11 +327,14 @@ const materialForm = reactive({
     name: '',
     category: '',
     price: 0,
+    originalPrice: 0,
     stock: 0,
     specs: '',
     description: '',
     coverImg: '',
     fileUrl: '',
+    flashStartTime: '',
+    flashEndTime: '',
     status: 1
 })
 const fileList = ref([])
@@ -236,11 +347,18 @@ const rules = {
 }
 
 onMounted(() => {
-    // Check URL params for category
     if (route.query.category) {
         activeCategory.value = route.query.category
     }
+    startCountdown()
     fetchMaterials()
+    fetchFlashMaterials()
+})
+
+onUnmounted(() => {
+    if (countdownTimer) {
+        clearInterval(countdownTimer)
+    }
 })
 
 watch(() => route.query.category, (newVal) => {
@@ -257,14 +375,50 @@ const handleCategoryChange = (name) => {
 }
 
 const getCategoryLabel = (val) => {
-    const map = { 'public': '公共课', 'major': '专业课', 'interview': '复试' }
+    const map = {
+        'public': '公共课',
+        'major': '专业课',
+        'interview': '复试',
+        '公共课': '公共课',
+        '专业课': '专业课',
+        '复试资料': '复试'
+    }
     return map[val] || val
 }
 
 const getCategoryType = (val) => {
-    const map = { 'public': 'primary', 'major': 'success', 'interview': 'warning' }
+    const map = {
+        'public': 'primary',
+        'major': 'success',
+        'interview': 'warning',
+        '公共课': 'primary',
+        '专业课': 'success',
+        '复试资料': 'warning'
+    }
     return map[val] || 'info'
 }
+
+const flashSaleList = computed(() => {
+    return (flashMaterialList.value || [])
+        .filter(item => isFlashSaleActive(item))
+        .slice()
+        .sort((a, b) => getTimeValue(a.flashEndTime) - getTimeValue(b.flashEndTime))
+        .slice(0, 4)
+})
+
+const flashRemainingSeconds = computed(() => {
+    if (!flashSaleList.value.length) {
+        return 0
+    }
+    const nearestEnd = flashSaleList.value
+        .map(item => getTimeValue(item.flashEndTime))
+        .filter(time => time > 0)
+        .sort((a, b) => a - b)[0]
+    if (!nearestEnd) {
+        return 0
+    }
+    return Math.max(Math.floor((nearestEnd - nowTimestamp.value) / 1000), 0)
+})
 
 const fetchMaterials = async () => {
     loading.value = true
@@ -273,7 +427,9 @@ const fetchMaterials = async () => {
             pageNum: pageNum.value,
             pageSize: pageSize.value,
             keyword: keyword.value,
-            category: activeCategory.value === 'all' ? undefined : activeCategory.value
+            category: activeCategory.value === 'all' ? undefined : activeCategory.value,
+            sortBy: sortField.value,
+            sortOrder: sortOrder.value
         }
         const res = await getMaterialList(params)
         materialList.value = res.records || []
@@ -282,6 +438,15 @@ const fetchMaterials = async () => {
         console.error(error)
     } finally {
         loading.value = false
+    }
+}
+
+const fetchFlashMaterials = async () => {
+    try {
+        const res = await getFlashMaterialList(8)
+        flashMaterialList.value = Array.isArray(res) ? res : []
+    } catch (error) {
+        flashMaterialList.value = []
     }
 }
 
@@ -294,10 +459,150 @@ const viewDetail = (id) => {
     router.push(`/materials/${id}`)
 }
 
+const toggleSort = (field) => {
+    if (sortField.value === field) {
+        sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+    } else {
+        sortField.value = field
+        sortOrder.value = 'desc'
+    }
+    pageNum.value = 1
+    fetchMaterials()
+}
+
+const getSortArrow = (field) => {
+    if (sortField.value !== field) {
+        return '↕'
+    }
+    return sortOrder.value === 'asc' ? '↑' : '↓'
+}
+
+const hasOriginalPrice = (item) => {
+    const original = Number(item.originalPrice || 0)
+    const current = Number(item.price || 0)
+    return original > current && current > 0
+}
+
+const getDiscountText = (item) => {
+    const original = Number(item.originalPrice || 0)
+    const current = Number(item.price || 0)
+    if (!(original > current && current > 0)) {
+        return '限时价'
+    }
+    return `${((current / original) * 10).toFixed(1)}折`
+}
+
+const getTimeValue = (time) => {
+    if (!time) {
+        return 0
+    }
+    const raw = String(time).trim()
+    if (!raw) {
+        return 0
+    }
+    const direct = new Date(raw).getTime()
+    if (!Number.isNaN(direct)) {
+        return direct
+    }
+    const normalized = raw.replace('T', ' ')
+    const match = normalized.match(/^(\d{4})-(\d{2})-(\d{2})\s(\d{2}):(\d{2})(?::(\d{2}))?$/)
+    if (!match) {
+        return 0
+    }
+    const value = new Date(
+        Number(match[1]),
+        Number(match[2]) - 1,
+        Number(match[3]),
+        Number(match[4]),
+        Number(match[5]),
+        Number(match[6] || 0)
+    ).getTime()
+    return Number.isNaN(value) ? 0 : value
+}
+
+const normalizeDateTimeString = (time) => {
+    if (!time) {
+        return ''
+    }
+    return String(time).replace(' ', 'T')
+}
+
+const isFlashSaleActive = (item) => {
+    if (!item || item.stock <= 0 || !hasOriginalPrice(item)) {
+        return false
+    }
+    const start = getTimeValue(item.flashStartTime)
+    const end = getTimeValue(item.flashEndTime)
+    if (!start || !end) {
+        return false
+    }
+    const now = nowTimestamp.value
+    return start <= now && now <= end
+}
+
+const getRemainingSeconds = (endTime) => {
+    const end = getTimeValue(endTime)
+    if (!end) {
+        return 0
+    }
+    return Math.max(Math.floor((end - nowTimestamp.value) / 1000), 0)
+}
+
+const formatPrice = (price) => {
+    return Number(price || 0).toFixed(2)
+}
+
+const formatCountdown = (seconds) => {
+    const safeSeconds = Math.max(Number(seconds) || 0, 0)
+    const day = Math.floor(safeSeconds / 86400)
+    const hour = String(Math.floor((safeSeconds % 86400) / 3600)).padStart(2, '0')
+    const minute = String(Math.floor((safeSeconds % 3600) / 60)).padStart(2, '0')
+    const second = String(safeSeconds % 60).padStart(2, '0')
+    if (day > 0) {
+        return `${day}天 ${hour}:${minute}:${second}`
+    }
+    return `${hour}:${minute}:${second}`
+}
+
+const startCountdown = () => {
+    if (countdownTimer) {
+        clearInterval(countdownTimer)
+    }
+    countdownTimer = setInterval(() => {
+        nowTimestamp.value = Date.now()
+    }, 1000)
+}
+
+const handleQuickAddToCart = async (item) => {
+    if (!user.value.id) {
+        ElMessage.warning('请先登录')
+        router.push('/login')
+        return
+    }
+    if (item.stock <= 0) {
+        ElMessage.warning('该商品已售罄')
+        return
+    }
+    try {
+        await addToCart({
+            userId: user.value.id,
+            materialId: item.id,
+            quantity: 1
+        })
+        ElMessage.success('已加入购物车')
+    } catch (error) {
+        ElMessage.error('加入购物车失败')
+    }
+}
+
 const openDialog = (item = null) => {
     if (item) {
         isEdit.value = true
-        Object.assign(materialForm, item)
+        Object.assign(materialForm, {
+            ...item,
+            flashStartTime: normalizeDateTimeString(item.flashStartTime),
+            flashEndTime: normalizeDateTimeString(item.flashEndTime)
+        })
         fileList.value = item.fileUrl ? [{ name: '资料文件', url: item.fileUrl }] : []
     } else {
         isEdit.value = false
@@ -306,11 +611,14 @@ const openDialog = (item = null) => {
             name: '',
             category: 'public',
             price: 0,
+            originalPrice: 0,
             stock: 999,
             specs: 'PDF',
             description: '',
             coverImg: '',
             fileUrl: '',
+            flashStartTime: '',
+            flashEndTime: '',
             status: 1
         })
         fileList.value = []
@@ -332,14 +640,25 @@ const submitForm = async () => {
         if (valid) {
             try {
                 if (isEdit.value) {
-                    await updateMaterial(materialForm)
+                    await updateMaterial({
+                        ...materialForm,
+                        originalPrice: materialForm.originalPrice || null,
+                        flashStartTime: materialForm.flashStartTime || null,
+                        flashEndTime: materialForm.flashEndTime || null
+                    })
                     ElMessage.success('更新成功')
                 } else {
-                    await saveMaterial(materialForm)
+                    await saveMaterial({
+                        ...materialForm,
+                        originalPrice: materialForm.originalPrice || null,
+                        flashStartTime: materialForm.flashStartTime || null,
+                        flashEndTime: materialForm.flashEndTime || null
+                    })
                     ElMessage.success('发布成功')
                 }
                 dialogVisible.value = false
                 fetchMaterials()
+                fetchFlashMaterials()
             } catch (error) {
                 ElMessage.error('操作失败')
             }
@@ -355,6 +674,7 @@ const handleDelete = (id) => {
             await deleteMaterial(id)
             ElMessage.success('删除成功')
             fetchMaterials()
+            fetchFlashMaterials()
         } catch (error) {
             ElMessage.error('删除失败')
         }
@@ -421,15 +741,26 @@ const handleDelete = (id) => {
 }
 
 .main-content {
-    max-width: 1200px;
+    max-width: 1560px;
     margin: 0 auto;
     padding: 0 20px 60px;
+}
+
+.content-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 18px;
+    align-items: start;
+}
+
+.material-section {
+    min-width: 0;
 }
 
 .filter-bar {
     display: flex;
     align-items: center;
-    margin-bottom: 30px;
+    margin-bottom: 16px;
     flex-wrap: wrap;
     gap: 15px;
 }
@@ -461,10 +792,168 @@ const handleDelete = (id) => {
     flex: 1;
 }
 
+.sort-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 22px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 10px 14px;
+}
+
+.sort-label {
+    font-size: 14px;
+    color: #64748b;
+    margin-right: 6px;
+}
+
+.sort-item {
+    border: none;
+    background: transparent;
+    color: #475569;
+    border-radius: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.sort-item:hover {
+    background: #f1f5f9;
+}
+
+.sort-item.active {
+    background: #e0ecff;
+    color: #2563eb;
+}
+
+.sort-arrow {
+    margin-left: 4px;
+    font-size: 12px;
+}
+
+.flash-sale-section {
+    background: linear-gradient(135deg, #fff6ee 0%, #ffe6e6 100%);
+    border: 1px solid #ffd8d8;
+    border-radius: 14px;
+    padding: 18px;
+}
+
+.flash-sidebar {
+    position: sticky;
+    top: 16px;
+}
+
+.flash-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.flash-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #b91c1c;
+}
+
+.flash-countdown {
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #b91c1c;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.flash-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.flash-card {
+    background: #ffffff;
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 1px solid #ffe2e2;
+    transition: all 0.2s;
+}
+
+.flash-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(239, 68, 68, 0.15);
+}
+
+.flash-image {
+    height: 120px;
+    position: relative;
+}
+
+.flash-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.discount-tag {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: #ef4444;
+    color: #ffffff;
+    font-size: 12px;
+    border-radius: 999px;
+    padding: 4px 8px;
+    font-weight: 600;
+}
+
+.flash-info {
+    padding: 10px;
+}
+
+.flash-name {
+    font-size: 14px;
+    color: #1e293b;
+    margin-bottom: 8px;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.flash-price-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.flash-price {
+    color: #dc2626;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.flash-origin {
+    color: #94a3b8;
+    font-size: 12px;
+    text-decoration: line-through;
+}
+
+.flash-item-countdown {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #b91c1c;
+    font-weight: 600;
+}
+
 .material-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 25px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
     margin-bottom: 40px;
 }
 
@@ -558,11 +1047,18 @@ const handleDelete = (id) => {
     flex: 1;
 }
 
+.card-sales {
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 8px;
+}
+
 .card-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-top: auto;
+    margin-bottom: 10px;
 }
 
 .price {
@@ -571,12 +1067,29 @@ const handleDelete = (id) => {
     color: #ef4444;
 }
 
+.price-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.origin-price {
+    font-size: 12px;
+    color: #94a3b8;
+    text-decoration: line-through;
+}
+
 .specs {
     font-size: 12px;
     color: var(--text-secondary);
     background: #f1f5f9;
     padding: 2px 8px;
     border-radius: 4px;
+}
+
+.add-cart-btn {
+    width: 100%;
+    border-radius: 8px;
 }
 
 .admin-actions {
@@ -595,6 +1108,38 @@ const handleDelete = (id) => {
 .pagination-wrapper {
     display: flex;
     justify-content: center;
+}
+
+@media (max-width: 1440px) {
+    .material-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 1200px) {
+    .material-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 1024px) {
+    .content-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .flash-sidebar {
+        position: static;
+    }
+
+    .material-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 720px) {
+    .material-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* Dialog Styling */

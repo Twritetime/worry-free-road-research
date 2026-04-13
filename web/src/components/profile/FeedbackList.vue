@@ -38,15 +38,29 @@
     </div>
 
     <!-- 提交反馈对话框 -->
-    <el-dialog v-model="dialogVisible" title="提交反馈" width="500px" class="custom-dialog">
-      <el-form :model="form" ref="formRef" :rules="rules">
-        <el-form-item prop="content">
+    <el-dialog v-model="dialogVisible" title="提交反馈" width="600px" class="custom-dialog">
+      <el-form :model="form" ref="formRef" :rules="rules" label-position="top">
+        <el-form-item label="问题类型" prop="type">
+          <el-select v-model="form.type" placeholder="请选择问题类型" size="large" style="width: 100%">
+            <el-option label="功能建议" value="功能建议" />
+            <el-option label="Bug反馈" value="Bug反馈" />
+            <el-option label="内容纠错" value="内容纠错" />
+            <el-option label="账号问题" value="账号问题" />
+            <el-option label="其他" value="其他" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="联系方式" prop="contact">
+          <el-input v-model="form.contact" placeholder="请输入手机号或邮箱" size="large" />
+        </el-form-item>
+        <el-form-item label="问题描述" prop="content">
           <el-input
             v-model="form.content"
             type="textarea"
-            :rows="6"
-            placeholder="请输入您的反馈或建议，我们会尽快回复"
+            :rows="5"
+            placeholder="请详细描述您的问题（10-500字）"
             resize="none"
+            maxlength="500"
+            show-word-limit
           />
         </el-form-item>
       </el-form>
@@ -60,39 +74,42 @@
 
     <!-- 查看详情对话框 -->
     <el-dialog v-model="detailVisible" title="反馈详情" width="600px" class="custom-dialog">
-      <div v-if="currentFeedback" class="feedback-chat">
-        <div class="chat-item user">
-            <div class="chat-avatar">
-                <el-avatar :size="36" :src="user.avatar || 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'" />
-            </div>
-            <div class="chat-content">
-                <div class="chat-info">
-                    <span class="name">我</span>
-                    <span class="time">{{ currentFeedback.createTime }}</span>
-                </div>
-                <div class="chat-bubble user-bubble">
-                    {{ currentFeedback.content }}
-                </div>
-            </div>
+      <div v-if="currentFeedback" class="feedback-detail">
+        <div class="detail-meta">
+          <el-tag v-if="currentFeedback.type" type="primary" effect="plain">{{ currentFeedback.type }}</el-tag>
+          <span class="contact-info" v-if="currentFeedback.contact">
+            <el-icon><Message /></el-icon> {{ currentFeedback.contact }}
+          </span>
+          <span class="time-info">
+            <el-icon><Clock /></el-icon> {{ currentFeedback.createTime }}
+          </span>
         </div>
-        
-        <div class="chat-item admin" v-if="currentFeedback.status === 1">
-            <div class="chat-avatar">
-                <el-avatar :size="36" icon="Service" class="admin-avatar" />
-            </div>
-            <div class="chat-content">
-                <div class="chat-info">
-                    <span class="name">客服回复</span>
-                    <span class="time">{{ currentFeedback.replyTime }}</span>
-                </div>
-                <div class="chat-bubble admin-bubble">
-                    {{ currentFeedback.reply }}
-                </div>
-            </div>
+        <div class="detail-content">
+          <div class="content-label">问题描述：</div>
+          <div class="content-text">{{ currentFeedback.content }}</div>
         </div>
-        
-        <div v-else class="waiting-reply">
-            <el-empty description="等待客服回复中..." :image-size="80" />
+
+        <el-divider />
+
+        <div class="feedback-chat">
+          <div class="chat-item admin" v-if="currentFeedback.status === 1">
+              <div class="chat-avatar">
+                  <el-avatar :size="36" icon="Service" class="admin-avatar" />
+              </div>
+              <div class="chat-content">
+                  <div class="chat-info">
+                      <span class="name">客服回复</span>
+                      <span class="time">{{ currentFeedback.replyTime }}</span>
+                  </div>
+                  <div class="chat-bubble admin-bubble">
+                      {{ currentFeedback.reply }}
+                  </div>
+              </div>
+          </div>
+
+          <div v-else class="waiting-reply">
+              <el-empty description="等待客服回复中..." :image-size="80" />
+          </div>
         </div>
       </div>
     </el-dialog>
@@ -105,7 +122,7 @@ import { getFeedbackList, createFeedback } from '@/api/feedback'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import { storeToRefs } from 'pinia'
-import { EditPen, Service } from '@element-plus/icons-vue'
+import { EditPen, Service, Message, Clock } from '@element-plus/icons-vue'
 
 const userStore = useUserStore()
 const { user } = storeToRefs(userStore)
@@ -120,10 +137,17 @@ const dialogVisible = ref(false)
 const submitting = ref(false)
 const formRef = ref(null)
 const form = reactive({
+  type: '',
+  contact: '',
   content: ''
 })
 const rules = {
-  content: [{ required: true, message: '请输入反馈内容', trigger: 'blur' }]
+  type: [{ required: true, message: '请选择问题类型', trigger: 'change' }],
+  contact: [{ required: true, message: '请输入联系方式', trigger: 'blur' }],
+  content: [
+    { required: true, message: '请输入问题描述', trigger: 'blur' },
+    { min: 10, max: 500, message: '问题描述需要在10-500字之间', trigger: 'blur' }
+  ]
 }
 
 const detailVisible = ref(false)
@@ -159,10 +183,14 @@ const handleSubmit = async () => {
       try {
         await createFeedback({
           userId: user.value.id,
+          type: form.type,
+          contact: form.contact,
           content: form.content
         })
         ElMessage.success('提交成功')
         dialogVisible.value = false
+        form.type = ''
+        form.contact = ''
         form.content = ''
         fetchFeedbacks()
       } catch (error) {
@@ -283,5 +311,81 @@ onMounted(() => {
 
 .waiting-reply {
     padding: 20px 0;
+}
+
+.image-upload-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.upload-tip {
+    font-size: 12px;
+    color: #909399;
+}
+
+.feedback-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.detail-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.contact-info, .time-info {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #909399;
+    font-size: 14px;
+}
+
+.detail-images {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.images-label {
+    color: #606266;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.image-list {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.detail-image {
+    width: 80px;
+    height: 80px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.detail-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.content-label {
+    color: #606266;
+    font-size: 14px;
+}
+
+.content-text {
+    color: #303133;
+    font-size: 14px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-all;
 }
 </style>

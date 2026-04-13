@@ -23,7 +23,11 @@
             <el-tag :type="getCategoryTag(row.category)">{{ getCategoryText(row.category) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="author" label="作者" width="120" />
+        <el-table-column prop="nickname" label="作者" width="120">
+          <template #default="{ row }">
+            {{ row.nickname || '未知' }}
+          </template>
+        </el-table-column>
         <el-table-column prop="createTime" label="发布时间" width="180" />
         <el-table-column prop="viewCount" label="阅读" width="80" />
         <el-table-column prop="commentCount" label="评论" width="80" />
@@ -71,13 +75,11 @@
         <div v-if="currentPost">
             <h3>{{ currentPost.title }}</h3>
             <div class="post-meta">
-                <span>作者: {{ currentPost.author }}</span>
+                <span>作者: {{ currentPost.nickname || '未知' }}</span>
                 <span>时间: {{ currentPost.createTime }}</span>
                 <span>板块: {{ getCategoryText(currentPost.category) }}</span>
             </div>
-            <div class="post-content">
-                {{ currentPost.content }}
-            </div>
+            <div class="post-content" v-html="currentPost.content"></div>
         </div>
         <template #footer>
             <span class="dialog-footer">

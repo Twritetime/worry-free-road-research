@@ -2,6 +2,8 @@ package com.yanluwuyou.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.yanluwuyou.auth.AuthGuard;
+import com.yanluwuyou.auth.RequireLogin;
 import com.yanluwuyou.common.Result;
 import com.yanluwuyou.entity.Comment;
 import com.yanluwuyou.entity.Guide;
@@ -84,6 +86,7 @@ public class CommentController {
      * 发布评论
      */
     @PostMapping
+    @RequireLogin
     public Result<?> save(@RequestBody Comment comment) {
         // 默认 targetType 为 1 (Post) 如果没传
         if (comment.getTargetType() == null) {
@@ -98,6 +101,7 @@ public class CommentController {
             comment.setPostId(comment.getTargetId());
         }
 
+        comment.setUserId(AuthGuard.currentUserId());
         commentService.save(comment);
         
         // 更新评论数
@@ -128,9 +132,11 @@ public class CommentController {
      * 删除评论
      */
     @DeleteMapping("/{id}")
+    @RequireLogin
     public Result<?> delete(@PathVariable Long id) {
         Comment comment = commentService.getById(id);
         if (comment != null) {
+            AuthGuard.assertOwnerOrAdmin(comment.getUserId());
             // 更新评论数
             if (comment.getTargetType() != null) {
                 if (comment.getTargetType() == 1) {

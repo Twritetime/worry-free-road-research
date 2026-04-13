@@ -1,7 +1,6 @@
 package com.yanluwuyou.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.crypto.digest.DigestUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -10,8 +9,9 @@ import com.yanluwuyou.dto.UserRegisterDTO;
 import com.yanluwuyou.entity.User;
 import com.yanluwuyou.mapper.UserMapper;
 import com.yanluwuyou.service.UserService;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 
 /**
  * 用户服务实现类
@@ -33,9 +33,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         
         // 密码加密 (这里使用简单的MD5，实际生产应用BCrypt)
         user.setPassword(DigestUtil.md5Hex(userRegisterDTO.getPassword()));
-        user.setRole(User.ROLE_STUDENT); // 默认角色
+        user.setRole(User.ROLE_STUDENT);
+        user.setStatus(1);
         
         save(user);
+        user.setPassword(null);
         return user;
     }
 
@@ -55,7 +57,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (!dbPwd.equals(DigestUtil.md5Hex(inputPwd)) && !dbPwd.equals(inputPwd)) {
             throw new RuntimeException("密码错误");
         }
-        
+
+        if (user.getStatus() != null && user.getStatus() == 0) {
+            throw new RuntimeException("账号已被禁用");
+        }
+
+        user.setLastLoginTime(LocalDateTime.now());
+        updateById(user);
+        user.setPassword(null);
         return user;
     }
 }

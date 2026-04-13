@@ -21,10 +21,10 @@
     <el-card>
       <el-table :data="guideList" v-loading="loading" style="width: 100%">
         <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="university" label="院校" width="150" />
+        <el-table-column prop="institution" label="院校" width="150" />
         <el-table-column prop="major" label="专业" width="150" />
         <el-table-column prop="title" label="指南标题" show-overflow-tooltip />
-        <el-table-column prop="publishTime" label="发布时间" width="180" />
+        <el-table-column prop="createTime" label="发布时间" width="180" />
         <el-table-column prop="commentCount" label="评论数" width="100" />
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
@@ -39,9 +39,11 @@
             />
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="220" fixed="right">
-          <template #default="{ row }">
+        <el-table-column label="操作" width="280" fixed="right">
+          <template #default="{ row, $index }">
             <el-button type="primary" link @click="handleEdit(row)">编辑</el-button>
+            <el-button type="warning" link :disabled="$index === 0" @click="handleMove($index, -1)">上移</el-button>
+            <el-button type="warning" link :disabled="$index === guideList.length - 1" @click="handleMove($index, 1)">下移</el-button>
             <el-button type="success" link @click="handleComments(row)">评论管理</el-button>
             <el-button type="danger" link @click="handleDelete(row)">删除</el-button>
           </template>
@@ -62,8 +64,8 @@
 
     <el-dialog :title="dialogTitle" v-model="dialogVisible" width="700px">
       <el-form :model="form" label-width="80px" :rules="rules" ref="formRef">
-        <el-form-item label="院校" prop="university">
-          <el-input v-model="form.university" placeholder="请输入院校名称" />
+        <el-form-item label="院校" prop="institution">
+          <el-input v-model="form.institution" placeholder="请输入院校名称" />
         </el-form-item>
         <el-form-item label="专业" prop="major">
           <el-input v-model="form.major" placeholder="请输入专业名称" />
@@ -93,7 +95,7 @@
       <el-form :model="crawlForm" label-width="80px">
         <el-form-item label="目标URL">
                <el-input v-model="crawlForm.url" placeholder="请输入列表页URL" />
-               <div class="form-tip">推荐: http://www.chinakaoyan.com/zhaosheng/</div>
+               <div class="form-tip">仅支持研招网及高校研究生院官网（chsi.cn/chsi.com.cn/edu.cn/gov.cn）</div>
             </el-form-item>
           <el-form-item label="分类">
             <el-select v-model="crawlForm.category" style="width: 100%" @change="handleCategoryChange">
@@ -117,7 +119,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getGuideListAll, createGuide, updateGuide, deleteGuide, updateGuideStatus, crawlGuides } from '@/api/guide'
+import { getGuideListAll, createGuide, updateGuide, deleteGuide, updateGuideStatus, crawlGuides, swapGuideOrder } from '@/api/guide'
 import AdminCommentDialog from '@/components/AdminCommentDialog.vue'
 
 const loading = ref(false)
@@ -136,16 +138,16 @@ const currentGuideId = ref(null)
 const crawlDialogVisible = ref(false)
 const crawling = ref(false)
 const crawlForm = reactive({
-    url: 'http://www.chinakaoyan.com/zhaosheng/',
+    url: 'https://yz.chsi.com.cn/kyzx/',
     category: 'zhaoshengjianzhang'
   })
   
   const handleCategoryChange = (val) => {
         const urlMap = {
-            'zhaoshengjianzhang': 'http://www.chinakaoyan.com/zhaosheng/',
-            'zhuanyemulu': 'https://www.chinakaoyan.com/info/list/ClassID/52.shtml',
-            'kaoshidagang': 'https://www.chinakaoyan.com/info/list/ClassID/97.shtml',
-            'fushixize': 'https://www.chinakaoyan.com/info/list/ClassID/23.shtml'
+            'zhaoshengjianzhang': 'https://yz.chsi.com.cn/kyzx/',
+            'zhuanyemulu': 'https://yz.chsi.com.cn/zsml/',
+            'kaoshidagang': 'https://yz.chsi.com.cn/kyzx/',
+            'fushixize': 'https://yz.chsi.com.cn/kyzx/'
         }
         if (urlMap[val]) {
             crawlForm.url = urlMap[val]
@@ -157,14 +159,14 @@ const dialogTitle = ref('发布指南')
 const formRef = ref(null)
 const form = reactive({
   id: null,
-  university: '',
+  institution: '',
   major: '',
   title: '',
   content: ''
 })
 
 const rules = {
-  university: [{ required: true, message: '请输入院校', trigger: 'blur' }],
+  institution: [{ required: true, message: '请输入院校', trigger: 'blur' }],
   major: [{ required: true, message: '请输入专业', trigger: 'blur' }],
   title: [{ required: true, message: '请输入标题', trigger: 'blur' }],
   content: [{ required: true, message: '请输入内容', trigger: 'blur' }]
@@ -207,6 +209,18 @@ const handleStatusChange = async (row) => {
   }
 }
 
+const handleMove = async (index, offset) => {
+  const targetIndex = index + offset
+  if (targetIndex < 0 || targetIndex >= guideList.value.length) {
+    return
+  }
+  const current = guideList.value[index]
+  const target = guideList.value[targetIndex]
+  await swapGuideOrder(current.id, target.id)
+  ElMessage.success('排序已更新')
+  fetchData()
+}
+
 const handleComments = (row) => {
     currentGuideId.value = row.id
     commentDialogVisible.value = true
@@ -224,16 +238,12 @@ const submitCrawl = async () => {
     crawling.value = true
     try {
         const res = await crawlGuides(crawlForm.url, crawlForm.category)
-        // 假设res返回的是消息或者成功状态，后端返回 Result.success("成功爬取 X 条")
-        // 如果后端返回的是 Result 对象，request拦截器可能已经解包了 data，或者直接返回
-        // 假设拦截器返回的是 response.data
-        // 查看 request.js 确认
-        ElMessage.success('爬取任务完成')
+        const successMessage = typeof res === 'string' ? res : (res?.message || '爬取任务完成')
+        ElMessage.success(successMessage)
         crawlDialogVisible.value = false
         fetchData()
     } catch (error) {
         console.error(error)
-        // ElMessage.error('爬取失败') // request拦截器可能已处理
     } finally {
         crawling.value = false
     }
@@ -241,7 +251,7 @@ const submitCrawl = async () => {
 
 const handleAdd = () => {
   dialogTitle.value = '发布指南'
-  Object.assign(form, { id: null, university: '', major: '', title: '', content: '' })
+  Object.assign(form, { id: null, institution: '', major: '', title: '', content: '' })
   dialogVisible.value = true
 }
 

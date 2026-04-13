@@ -51,4 +51,6 @@ public class News extends BaseEntity {
      * 状态: 1:已发布, 0:草稿
      */
     private Integer status;
+
+    private Integer sortOrder;
 }

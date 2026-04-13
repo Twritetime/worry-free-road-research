@@ -100,11 +100,13 @@
                              <el-upload
                               class="avatar-uploader"
                               :action="uploadUrl"
+                              drag
                               :show-file-list="false"
                               :on-success="handleAvatarSuccess"
+                              :on-error="handleAvatarError"
                               :before-upload="beforeAvatarUpload"
                             >
-                              <img v-if="userInfo.avatar" :src="userInfo.avatar" class="avatar" />
+                              <img v-if="avatarSrc" :src="avatarSrc" class="avatar" />
                               <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
                             </el-upload>
                             <div class="upload-tip">
@@ -208,10 +210,11 @@ import dayjs from 'dayjs'
 
 const router = useRouter()
 const userStore = useUserStore()
-const { user: currentUser, isAdmin } = storeToRefs(userStore)
+const { user: currentUser } = storeToRefs(userStore)
 
 const activeMenu = ref('info')
 const uploadUrl = 'http://localhost:8080/file/upload'
+const apiBaseUrl = 'http://localhost:8080'
 
 // Menu Items
 const menuItems = [
@@ -261,14 +264,33 @@ const statsLoading = ref(false)
 
 // 个人资料相关
 const userInfo = ref({ ...currentUser.value })
+const normalizeAvatarUrl = (url) => {
+    if (!url) {
+        return ''
+    }
+    const raw = String(url).trim()
+    if (!raw) {
+        return ''
+    }
+    if (/^https?:\/\//i.test(raw)) {
+        return raw
+    }
+    if (raw.startsWith('/')) {
+        return `${apiBaseUrl}${raw}`
+    }
+    return `${apiBaseUrl}/${raw}`
+}
+const avatarSrc = computed(() => normalizeAvatarUrl(userInfo.value.avatar))
 
 const handleAvatarSuccess = (res) => {
-  if (res.code === 200 || res.code === '200') {
-    userInfo.value.avatar = res.data
+    const avatarUrl = res?.data || res
+    userInfo.value.avatar = normalizeAvatarUrl(avatarUrl)
+    userStore.setUser(userInfo.value)
     ElMessage.success('头像上传成功')
-  } else {
+}
+
+const handleAvatarError = () => {
     ElMessage.error('头像上传失败')
-  }
 }
 
 const beforeAvatarUpload = (file) => {
@@ -293,6 +315,25 @@ const handleUpdateInfo = async () => {
     } catch (error) {
         console.error(error)
         ElMessage.error('更新失败')
+    }
+}
+
+const fetchCurrentUserInfo = async () => {
+    if (!currentUser.value.id) {
+        return
+    }
+    try {
+        const res = await getUserInfo(currentUser.value.id)
+        userInfo.value = {
+            ...res,
+            avatar: normalizeAvatarUrl(res?.avatar)
+        }
+        userStore.setUser(userInfo.value)
+    } catch (error) {
+        userInfo.value = {
+            ...currentUser.value,
+            avatar: normalizeAvatarUrl(currentUser.value?.avatar)
+        }
     }
 }
 
@@ -423,6 +464,7 @@ const fetchPersonalStats = async () => {
 }
 
 onMounted(() => {
+    fetchCurrentUserInfo()
     // If active menu is posts, fetch posts
     if (activeMenu.value === 'posts') {
         fetchMyPosts()

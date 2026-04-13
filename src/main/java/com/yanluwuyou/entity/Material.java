@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 /**
  * 资料商城实体类
@@ -32,6 +33,11 @@ public class Material extends BaseEntity {
      * 价格
      */
     private BigDecimal price;
+
+    /**
+     * 划线价
+     */
+    private BigDecimal originalPrice;
 
     /**
      * 库存
@@ -64,7 +70,19 @@ public class Material extends BaseEntity {
     private Integer sales;
 
     /**
+     * 活动开始时间
+     */
+    private LocalDateTime flashStartTime;
+
+    /**
+     * 活动结束时间
+     */
+    private LocalDateTime flashEndTime;
+
+    /**
      * 状态: 1:上架, 0:下架
      */
     private Integer status;
+
+    private Integer sortOrder;
 }

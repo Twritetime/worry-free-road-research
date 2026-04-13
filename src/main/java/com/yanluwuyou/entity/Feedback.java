@@ -16,17 +16,24 @@ public class Feedback extends BaseEntity {
     private Long id;
 
     private Long userId;
+
+    private String type;
+
+    private String contact;
+
     private String content;
+
+    private String coverImg;
+
     private String reply;
-    /**
-     * 0: Pending, 1: Replied
-     */
+
     private Integer status;
+
     private LocalDateTime replyTime;
 
     @TableField(exist = false)
     private String nickname;
-    
+
     @TableField(exist = false)
     private String avatar;
 }
