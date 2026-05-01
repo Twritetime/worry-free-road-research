@@ -43,6 +43,9 @@ public class GuideController {
     @Autowired
     private com.yanluwuyou.service.CrawlerService crawlerService;
 
+    @Autowired
+    private com.yanluwuyou.service.impl.CrawlerSchedulerService crawlerSchedulerService;
+
     /**
      * 爬取指南数据
      */
@@ -51,14 +54,23 @@ public class GuideController {
     public Result<?> crawl(@RequestParam String url, @RequestParam String category) {
         try {
             String normalizedUrl = normalizeCrawlUrl(url, category);
+            System.out.println("[爬取请求] URL: " + normalizedUrl + ", 分类: " + category);
+            
             int count = crawlerService.crawlGuides(normalizedUrl, category);
+            
             if (count >= 0) {
                 int removedCount = removeOutdatedGuides(category);
-                return Result.success("成功爬取 " + count + " 条数据，清理旧年份 " + removedCount + " 条");
+                String message = String.format("成功爬取 %d 条最新数据，清理旧数据 %d 条", count, removedCount);
+                System.out.println("[爬取完成] " + message);
+                return Result.success(message);
             }
             return Result.error("爬取失败，请检查URL或网络");
         } catch (IllegalArgumentException e) {
             return Result.error(e.getMessage());
+        } catch (Exception e) {
+            System.err.println("[爬取异常] " + e.getMessage());
+            e.printStackTrace();
+            return Result.error("爬取过程中发生错误: " + e.getMessage());
         }
     }
 
@@ -316,16 +328,10 @@ public class GuideController {
         if (categoryGuides.isEmpty()) {
             return 0;
         }
-        int latestYear = categoryGuides.stream()
-                .map(Guide::getTitle)
-                .mapToInt(this::extractNewestYear)
-                .filter(year -> year > 0)
-                .max()
-                .orElse(0);
-        if (latestYear == 0) {
-            return 0;
-        }
-        int minAllowedYear = Math.max(LocalDate.now().getYear() - 1, latestYear - 1);
+        
+        int currentYear = LocalDate.now().getYear();
+        int minAllowedYear = currentYear - 1;
+        
         List<Long> staleIds = categoryGuides.stream()
                 .filter(guide -> {
                     int year = extractNewestYear(guide.getTitle());
@@ -333,9 +339,11 @@ public class GuideController {
                 })
                 .map(Guide::getId)
                 .collect(Collectors.toList());
+                
         if (staleIds.isEmpty()) {
             return 0;
         }
+        
         guideService.removeBatchByIds(staleIds);
         return staleIds.size();
     }
@@ -372,5 +380,72 @@ public class GuideController {
             return "https://yz.chsi.com.cn/kyzx/";
         }
         return normalized;
+    }
+
+    /**
+     * 执行定时爬取任务
+     */
+    @PostMapping("/schedule/run")
+    @RequireRoles({User.ROLE_ADMIN, User.ROLE_OPERATOR})
+    public Result<?> runScheduleTask(@RequestParam String category) {
+        try {
+            String url = getDefaultUrl(category);
+            System.out.println("[手动触发定时任务] 分类: " + category + ", URL: " + url);
+            
+            int count = crawlerService.crawlGuides(url, category);
+            
+            if (count >= 0) {
+                String message = String.format("定时任务执行成功，爬取 %d 条数据", count);
+                return Result.success(message);
+            }
+            return Result.error("定时任务执行失败");
+        } catch (Exception e) {
+            System.err.println("[定时任务异常] " + e.getMessage());
+            return Result.error("定时任务执行异常: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取定时任务配置信息
+     */
+    @GetMapping("/schedule/config")
+    @RequireRoles({User.ROLE_ADMIN, User.ROLE_OPERATOR})
+    public Result<?> getScheduleConfig() {
+        java.util.Map<String, Object> config = new java.util.HashMap<>();
+        config.put("zhaoshengjianzhang", java.util.Map.of(
+                "name", "招生简章",
+                "url", "https://yz.chsi.com.cn/kyzx/",
+                "cron", "0 0 8 * * ?",
+                "description", "每天8:00执行"
+        ));
+        config.put("zhuanyemulu", java.util.Map.of(
+                "name", "专业目录",
+                "url", "https://yz.chsi.com.cn/zsml/",
+                "cron", "0 0 9 * * ?",
+                "description", "每天9:00执行"
+        ));
+        config.put("kaoshidagang", java.util.Map.of(
+                "name", "考试大纲",
+                "url", "https://yz.chsi.com.cn/kyzx/",
+                "cron", "0 0 10 * * ?",
+                "description", "每天10:00执行"
+        ));
+        config.put("fushixize", java.util.Map.of(
+                "name", "复试细则",
+                "url", "https://yz.chsi.com.cn/kyzx/",
+                "cron", "0 0 11 * * ?",
+                "description", "每天11:00执行"
+        ));
+        return Result.success(config);
+    }
+
+    private String getDefaultUrl(String category) {
+        return switch (category) {
+            case "zhaoshengjianzhang" -> "https://yz.chsi.com.cn/kyzx/";
+            case "zhuanyemulu" -> "https://yz.chsi.com.cn/zsml/";
+            case "kaoshidagang" -> "https://yz.chsi.com.cn/kyzx/";
+            case "fushixize" -> "https://yz.chsi.com.cn/kyzx/";
+            default -> "https://yz.chsi.com.cn/kyzx/";
+        };
     }
 }

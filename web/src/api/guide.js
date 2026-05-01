@@ -78,6 +78,24 @@ export const crawlGuides = (url, category) => {
     })
 }
 
+// 获取定时任务配置
+export const getScheduleConfig = () => {
+    return request({
+        url: '/guide/schedule/config',
+        method: 'get'
+    })
+}
+
+// 手动执行定时任务
+export const runScheduleTask = (category) => {
+    return request({
+        url: '/guide/schedule/run',
+        method: 'post',
+        params: { category },
+        timeout: 60000
+    })
+}
+
 // 获取所有院校列表
 export const getInstitutions = () => {
     return request({

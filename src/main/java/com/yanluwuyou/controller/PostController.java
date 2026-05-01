@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.yanluwuyou.auth.AuthGuard;
 import com.yanluwuyou.auth.RequireLogin;
 import com.yanluwuyou.auth.RequireRoles;
+import com.yanluwuyou.common.ContentSecurityUtil;
 import com.yanluwuyou.common.Result;
 import com.yanluwuyou.entity.Favorite;
 import com.yanluwuyou.entity.Post;
@@ -16,9 +17,6 @@ import com.yanluwuyou.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * 论坛帖子控制器
- */
 @RestController
 @RequestMapping("/post")
 public class PostController {
@@ -32,9 +30,9 @@ public class PostController {
     @Autowired
     private FavoriteService favoriteService;
 
-    /**
-     * 获取帖子列表
-     */
+    @Autowired
+    private ContentSecurityUtil securityUtil;
+
     @GetMapping("/list")
     public Result<Page<Post>> list(@RequestParam(defaultValue = "1") Integer pageNum,
                                    @RequestParam(defaultValue = "10") Integer pageSize,
@@ -46,7 +44,8 @@ public class PostController {
         Page<Post> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<Post> queryWrapper = new LambdaQueryWrapper<>();
         if (StrUtil.isNotBlank(keyword)) {
-            queryWrapper.and(w -> w.like(Post::getTitle, keyword).or().like(Post::getNickname, keyword));
+            String safeKeyword = securityUtil.sanitizeHtml(keyword);
+            queryWrapper.and(w -> w.like(Post::getTitle, safeKeyword).or().like(Post::getNickname, safeKeyword));
         }
         if (category != null) {
             queryWrapper.eq(Post::getCategory, category);
@@ -54,7 +53,7 @@ public class PostController {
         if (userId != null) {
             queryWrapper.eq(Post::getUserId, userId);
         } else {
-            queryWrapper.eq(Post::getStatus, 1); // 仅显示正常的帖子
+            queryWrapper.eq(Post::getStatus, 1);
         }
 
         if ("viewCount".equals(sortBy)) {
@@ -80,9 +79,6 @@ public class PostController {
         return Result.success(postService.page(page, queryWrapper));
     }
 
-    /**
-     * 获取所有帖子列表 (管理端)
-     */
     @GetMapping("/list-all")
     @RequireRoles({User.ROLE_ADMIN, User.ROLE_OPERATOR})
     public Result<Page<Post>> listAll(@RequestParam(defaultValue = "1") Integer pageNum,
@@ -93,7 +89,8 @@ public class PostController {
         Page<Post> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<Post> queryWrapper = new LambdaQueryWrapper<>();
         if (StrUtil.isNotBlank(keyword)) {
-            queryWrapper.and(w -> w.like(Post::getTitle, keyword).or().like(Post::getNickname, keyword));
+            String safeKeyword = securityUtil.sanitizeHtml(keyword);
+            queryWrapper.and(w -> w.like(Post::getTitle, safeKeyword).or().like(Post::getNickname, safeKeyword));
         }
         if (category != null) {
             queryWrapper.eq(Post::getCategory, category);
@@ -101,15 +98,11 @@ public class PostController {
         if (status != null) {
             queryWrapper.eq(Post::getStatus, status);
         }
-        // 置顶优先，然后按时间倒序
         queryWrapper.orderByDesc(Post::getIsTop).orderByDesc(Post::getCreateTime);
-        
+
         return Result.success(postService.page(page, queryWrapper));
     }
 
-    /**
-     * 审核帖子
-     */
     @PutMapping("/{id}/audit/{status}")
     @RequireRoles({User.ROLE_ADMIN, User.ROLE_OPERATOR})
     public Result<?> audit(@PathVariable Long id, @PathVariable Integer status) {
@@ -122,9 +115,6 @@ public class PostController {
         return Result.success();
     }
 
-    /**
-     * 置顶/取消置顶
-     */
     @PutMapping("/{id}/top/{isTop}")
     @RequireRoles({User.ROLE_ADMIN, User.ROLE_OPERATOR})
     public Result<?> toggleTop(@PathVariable Long id, @PathVariable Integer isTop) {
@@ -137,14 +127,10 @@ public class PostController {
         return Result.success();
     }
 
-    /**
-     * 根据ID获取帖子详情
-     */
     @GetMapping("/{id}")
     public Result<Post> getById(@PathVariable Long id) {
         Post post = postService.getById(id);
         if (post != null) {
-            // 增加浏览量
             post.setViewCount(post.getViewCount() == null ? 1 : post.getViewCount() + 1);
             postService.updateById(post);
         }
@@ -172,12 +158,29 @@ public class PostController {
         return Result.success();
     }
 
-    /**
-     * 发布帖子
-     */
     @PostMapping
     @RequireLogin
     public Result<?> save(@RequestBody Post post) {
+        if (StrUtil.isBlank(post.getTitle())) {
+            return Result.error("帖子标题不能为空");
+        }
+        if (StrUtil.isBlank(post.getContent())) {
+            return Result.error("帖子内容不能为空");
+        }
+
+        ContentSecurityUtil.SecurityResult titleCheck = securityUtil.checkContent(post.getTitle());
+        if (!titleCheck.isPassed()) {
+            return Result.error("帖子标题包含敏感词，请修改后重试");
+        }
+
+        ContentSecurityUtil.SecurityResult contentCheck = securityUtil.checkContent(post.getContent());
+        if (!contentCheck.isPassed()) {
+            return Result.error("帖子内容包含敏感词，请修改后重试");
+        }
+
+        post.setTitle(securityUtil.sanitizeHtml(post.getTitle()));
+        post.setContent(securityUtil.sanitizeHtml(post.getContent()));
+
         if (post.getViewCount() == null) post.setViewCount(0);
         if (post.getLikeCount() == null) post.setLikeCount(0);
         if (post.getCommentCount() == null) post.setCommentCount(0);
@@ -192,9 +195,6 @@ public class PostController {
         return Result.success();
     }
 
-    /**
-     * 更新帖子
-     */
     @PutMapping
     @RequireLogin
     public Result<?> update(@RequestBody Post post) {
@@ -203,6 +203,23 @@ public class PostController {
             return Result.error("帖子不存在");
         }
         AuthGuard.assertOwnerOrAdmin(origin.getUserId());
+
+        if (StrUtil.isNotBlank(post.getTitle())) {
+            ContentSecurityUtil.SecurityResult titleCheck = securityUtil.checkContent(post.getTitle());
+            if (!titleCheck.isPassed()) {
+                return Result.error("帖子标题包含敏感词，请修改后重试");
+            }
+            post.setTitle(securityUtil.sanitizeHtml(post.getTitle()));
+        }
+
+        if (StrUtil.isNotBlank(post.getContent())) {
+            ContentSecurityUtil.SecurityResult contentCheck = securityUtil.checkContent(post.getContent());
+            if (!contentCheck.isPassed()) {
+                return Result.error("帖子内容包含敏感词，请修改后重试");
+            }
+            post.setContent(securityUtil.sanitizeHtml(post.getContent()));
+        }
+
         post.setUserId(origin.getUserId());
         User user = userService.getById(post.getUserId());
         if (user != null) {
@@ -213,9 +230,6 @@ public class PostController {
         return Result.success();
     }
 
-    /**
-     * 删除帖子
-     */
     @DeleteMapping("/{id}")
     @RequireLogin
     public Result<?> delete(@PathVariable Long id) {

@@ -15,6 +15,18 @@ public class GlobalExceptionHandler {
         return Result.error(413, "上传文件过大，请上传不超过 50MB 的文件");
     }
 
+    @ExceptionHandler(SecurityException.class)
+    public Result<?> handleSecurityException(SecurityException e) {
+        log.warn("Security exception: {}", e.getMessage());
+        return Result.error(e.getCode(), e.getMessage());
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public Result<?> handleIllegalArgumentException(IllegalArgumentException e) {
+        log.warn("Illegal argument: {}", e.getMessage());
+        return Result.error(400, e.getMessage());
+    }
+
     @ExceptionHandler(Exception.class)
     public Result<?> handleException(Exception e) {
         log.error("System Error", e);

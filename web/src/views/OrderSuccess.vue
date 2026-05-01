@@ -7,7 +7,7 @@
     >
       <template #extra>
         <el-button type="primary" @click="goToOrderList">查看订单列表</el-button>
-        <el-button @click="goToHome">返回首页</el-button>
+        <el-button @click="goBack">返回上一页</el-button>
       </template>
     </el-result>
 
@@ -69,6 +69,9 @@ const fetchOrderDetail = async (orderNo) => {
     loading.value = true
     const res = await getOrderByNo(orderNo)
     order.value = res
+    setTimeout(() => {
+      router.push('/order/list')
+    }, 2000)
   } catch (error) {
     ElMessage.error('获取订单详情失败')
   } finally {
@@ -88,6 +91,21 @@ const goToOrderList = () => {
 
 const goToHome = () => {
   router.push('/')
+}
+
+const goBack = () => {
+  const returnUrl = sessionStorage.getItem('orderReturnUrl')
+  if (returnUrl) {
+    sessionStorage.removeItem('orderReturnUrl')
+    router.push(returnUrl)
+  } else {
+    const referrer = document.referrer
+    if (referrer && referrer.includes(window.location.host)) {
+      window.history.back()
+    } else {
+      router.push('/')
+    }
+  }
 }
 </script>
 

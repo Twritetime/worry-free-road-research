@@ -418,17 +418,58 @@ const handleShare = () => {
     min-height: 300px;
 }
 
-/* Add some basic markdown-like styles */
+.article-body :deep(.article-content) {
+    max-width: 100%;
+}
+
+.article-body :deep(.original-link) {
+    background: #f8f9fa;
+    border-left: 4px solid #409eff;
+    padding: 20px;
+    border-radius: 4px;
+    margin: 20px 0;
+}
+
+.article-body :deep(.original-link a) {
+    color: #409eff;
+    text-decoration: none;
+    word-break: break-all;
+}
+
+.article-body :deep(.original-link a:hover) {
+    text-decoration: underline;
+}
+
 .article-body :deep(h2) {
     font-size: 24px;
     margin-top: 30px;
     margin-bottom: 16px;
     border-left: 4px solid var(--el-color-primary);
     padding-left: 12px;
+    color: #1a1a1a;
+    font-weight: 600;
+}
+
+.article-body :deep(h3) {
+    font-size: 20px;
+    margin-top: 24px;
+    margin-bottom: 12px;
+    color: #1a1a1a;
+    font-weight: 600;
+}
+
+.article-body :deep(h4) {
+    font-size: 18px;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    color: #1a1a1a;
+    font-weight: 600;
 }
 
 .article-body :deep(p) {
     margin-bottom: 16px;
+    text-align: justify;
+    line-height: 1.8;
 }
 
 .article-body :deep(img) {
@@ -436,6 +477,88 @@ const handleShare = () => {
     border-radius: 8px;
     margin: 16px 0;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    display: block;
+}
+
+.article-body :deep(ul), .article-body :deep(ol) {
+    margin: 16px 0;
+    padding-left: 24px;
+}
+
+.article-body :deep(li) {
+    margin-bottom: 8px;
+    line-height: 1.8;
+}
+
+.article-body :deep(table) {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    background: #fff;
+}
+
+.article-body :deep(th), .article-body :deep(td) {
+    border: 1px solid #e4e7ed;
+    padding: 12px;
+    text-align: left;
+}
+
+.article-body :deep(th) {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.article-body :deep(tr:nth-child(even)) {
+    background: #fafafa;
+}
+
+.article-body :deep(blockquote) {
+    border-left: 4px solid #409eff;
+    padding: 12px 20px;
+    margin: 16px 0;
+    background: #f8f9fa;
+    border-radius: 4px;
+    color: #606266;
+}
+
+.article-body :deep(a) {
+    color: #409eff;
+    text-decoration: none;
+    border-bottom: 1px solid #409eff;
+}
+
+.article-body :deep(a:hover) {
+    color: #66b1ff;
+    border-bottom-color: #66b1ff;
+}
+
+.article-body :deep(strong) {
+    color: #1a1a1a;
+    font-weight: 600;
+}
+
+.article-body :deep(code) {
+    background: #f5f7fa;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    color: #e6a23c;
+}
+
+.article-body :deep(pre) {
+    background: #f5f7fa;
+    padding: 16px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 16px 0;
+}
+
+.article-body :deep(pre code) {
+    background: none;
+    padding: 0;
+    color: #303133;
 }
 
 .article-footer {

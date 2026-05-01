@@ -56,7 +56,7 @@
                 <div class="section-header">
                     <h2 class="section-title">最新资讯</h2>
                     <div class="header-actions">
-                        <el-button v-if="isAdmin" type="primary" link @click="handleAddNews">发布资讯</el-button>
+                        <el-button v-if="isFrontAdmin" type="primary" link @click="handleAddNews">发布资讯</el-button>
                         <el-button link @click="$router.push('/news')">查看更多 <el-icon><ArrowRight /></el-icon></el-button>
                     </div>
                 </div>
@@ -71,7 +71,7 @@
                             <h3 class="news-title">{{ item.title }}</h3>
                             <p class="news-excerpt">{{ stripHtml(item.content).substring(0, 100) }}...</p>
                         </div>
-                        <div v-if="isAdmin" class="admin-actions" @click.stop>
+                        <div v-if="isFrontAdmin" class="admin-actions" @click.stop>
                             <el-button circle size="small" @click="handleEditNews(item)"><el-icon><Edit /></el-icon></el-button>
                             <el-button circle size="small" type="danger" @click="handleDeleteNews(item)"><el-icon><Delete /></el-icon></el-button>
                         </div>
@@ -151,7 +151,7 @@ import { storeToRefs } from 'pinia'
 
 const router = useRouter()
 const userStore = useUserStore()
-const { isAdmin } = storeToRefs(userStore)
+const { isFrontAdmin } = storeToRefs(userStore)
 
 const newsList = ref([])
 const loading = ref(false)

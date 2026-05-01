@@ -1,5 +1,8 @@
 {
   "dependencies": {
     "echarts": "^6.0.0"
+  },
+  "devDependencies": {
+    "playwright": "^1.59.1"
   }
 }

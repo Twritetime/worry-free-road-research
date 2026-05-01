@@ -62,7 +62,7 @@
               </el-button>
             </el-button-group>
           </div>
-          <el-button v-if="isAdmin" type="primary" :icon="Plus" @click="handleAdd">发布资讯</el-button>
+          <el-button v-if="isFrontAdmin" type="primary" :icon="Plus" @click="handleAdd">发布资讯</el-button>
        </div>
 
        <div class="news-list" v-loading="loading">
@@ -90,7 +90,7 @@
                 </div>
              </div>
              
-             <div class="admin-actions" v-if="isAdmin" @click.stop>
+             <div class="admin-actions" v-if="isFrontAdmin" @click.stop>
                 <el-button circle size="small" :icon="Edit" @click="handleEdit(item)"></el-button>
                 <el-button circle size="small" type="danger" :icon="Delete" @click="handleDelete(item)"></el-button>
             </div>
@@ -150,7 +150,7 @@ import dayjs from 'dayjs'
 
 const router = useRouter()
 const userStore = useUserStore()
-const { isAdmin } = storeToRefs(userStore)
+const { isFrontAdmin } = storeToRefs(userStore)
 
 const newsList = ref([])
 const loading = ref(false)

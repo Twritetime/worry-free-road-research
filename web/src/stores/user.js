@@ -27,6 +27,7 @@ export const useUserStore = defineStore('user', () => {
     const isLoggedIn = computed(() => hasUserId(frontUser.value))
     const isAdminLoggedIn = computed(() => hasUserId(adminUser.value))
     const isAdmin = computed(() => adminUser.value.role === 'ADMIN')
+    const isFrontAdmin = computed(() => frontUser.value.role === 'ADMIN')
     const isOperator = computed(() => adminUser.value.role === 'OPERATOR')
     const hasAdminAccess = computed(() => ['ADMIN', 'OPERATOR'].includes(adminUser.value.role))
     const canViewDashboard = computed(() => hasAdminAccess.value)
@@ -87,6 +88,7 @@ export const useUserStore = defineStore('user', () => {
         canManageOrders,
         canManageMaterials,
         canManageContent,
+        isFrontAdmin,
         canManageFeedback,
         userInfo,
         adminInfo,

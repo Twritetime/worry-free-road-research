@@ -41,7 +41,7 @@
             </div>
           </div>
           <div class="flex-spacer"></div>
-          <el-button v-if="isAdmin" type="primary" :icon="Plus" @click="openDialog()">发布资料</el-button>
+          <el-button v-if="isFrontAdmin" type="primary" :icon="Plus" @click="openDialog()">发布资料</el-button>
        </div>
 
        <div class="sort-toolbar">
@@ -79,17 +79,35 @@
                   <div class="card-content">
                       <div class="card-tags">
                         <el-tag size="small" :type="getCategoryType(item.category)" effect="light">{{ getCategoryLabel(item.category) }}</el-tag>
+                        <el-tag v-if="item.fileFormat" size="small" effect="plain" class="format-tag">{{ item.fileFormat }}</el-tag>
                         <span class="stock-badge" v-if="item.stock < 10 && item.stock > 0">仅剩 {{ item.stock }} 份</span>
                         <span class="stock-badge out" v-if="item.stock <= 0">已售罄</span>
                       </div>
                       <h3 class="card-title" :title="item.name">{{ item.name }}</h3>
-                      <div class="card-sales">销量 {{ item.sales || 0 }}</div>
+                      <div class="card-meta">
+                        <span class="meta-item" v-if="item.author">
+                          <el-icon><User /></el-icon>
+                          {{ item.author }}
+                        </span>
+                        <span class="meta-item" v-if="item.applyYear">
+                          <el-icon><Calendar /></el-icon>
+                          {{ item.applyYear }}考研
+                        </span>
+                      </div>
+                      <div class="card-stats">
+                        <span class="stat-item">销量 {{ item.sales || 0 }}</span>
+                        <span class="stat-item" v-if="item.downloadCount">下载 {{ item.downloadCount }}</span>
+                        <span class="stat-item" v-if="item.fileSize">{{ item.fileSize }}</span>
+                      </div>
+                      <div v-if="item.rating" class="card-rating">
+                        <el-rate v-model="item.rating" disabled :max="5" size="small" />
+                        <span class="rating-score">{{ item.rating.toFixed(1) }}</span>
+                      </div>
                       <div class="card-footer">
                         <div class="price-wrap">
                           <span class="price">¥ {{ formatPrice(item.price) }}</span>
                           <span v-if="hasOriginalPrice(item)" class="origin-price">¥ {{ formatPrice(item.originalPrice) }}</span>
                         </div>
-                        <span class="specs">{{ item.specs || 'PDF' }}</span>
                       </div>
                       <el-button
                         class="add-cart-btn"
@@ -101,7 +119,7 @@
                         加入购物车
                       </el-button>
                   </div>
-                    <div v-if="isAdmin" class="admin-actions" @click.stop>
+                    <div v-if="isFrontAdmin" class="admin-actions" @click.stop>
                         <el-button circle size="small" :icon="Edit" @click="openDialog(item)"></el-button>
                         <el-button circle size="small" type="danger" :icon="Delete" @click="handleDelete(item.id)"></el-button>
                     </div>
@@ -147,6 +165,26 @@
                     </div>
                   </div>
                 </div>
+            </div>
+          </div>
+          <div class="recommend-section" v-if="user?.id && recommendedList.length > 0">
+            <div class="recommend-banner">
+              <div class="recommend-header">
+                <span class="recommend-icon">✨</span>
+                <span class="recommend-title">猜你喜欢</span>
+                <span class="recommend-desc">根据您的浏览记录推荐</span>
+              </div>
+              <div class="recommend-scroll">
+                <div v-for="item in recommendedList" :key="'rec-' + item.id" class="recommend-card" @click="viewDetail(item.id)">
+                  <div class="recommend-image">
+                    <el-image :src="item.coverImg || 'https://placehold.co/200x150?text=Material'" fit="cover" class="recommend-img" />
+                  </div>
+                  <div class="recommend-info">
+                    <h4 class="recommend-name">{{ item.name }}</h4>
+                    <div class="recommend-price">¥ {{ formatPrice(item.price) }}</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
        </div>
@@ -281,8 +319,9 @@
 import { ref, onMounted, reactive, watch, computed, onUnmounted } from 'vue'
 import { getMaterialList, getFlashMaterialList, saveMaterial, updateMaterial, deleteMaterial } from '@/api/material'
 import { addToCart } from '@/api/trade'
+import { getRecommendedMaterials } from '@/api/recommend'
 import { useRouter, useRoute } from 'vue-router'
-import { Plus, Edit, Delete, Search, Upload, Document } from '@element-plus/icons-vue'
+import { Plus, Edit, Delete, Search, Upload, Document, User, Calendar } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import { storeToRefs } from 'pinia'
@@ -290,9 +329,10 @@ import { storeToRefs } from 'pinia'
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
-const { isAdmin, user } = storeToRefs(userStore)
+const { isFrontAdmin, user } = storeToRefs(userStore)
 
 const materialList = ref([])
+const recommendedList = ref([])
 const flashMaterialList = ref([])
 const loading = ref(false)
 const keyword = ref('')
@@ -353,6 +393,7 @@ onMounted(() => {
     startCountdown()
     fetchMaterials()
     fetchFlashMaterials()
+    fetchRecommendations()
 })
 
 onUnmounted(() => {
@@ -447,6 +488,20 @@ const fetchFlashMaterials = async () => {
         flashMaterialList.value = Array.isArray(res) ? res : []
     } catch (error) {
         flashMaterialList.value = []
+    }
+}
+
+const fetchRecommendations = async () => {
+    try {
+        if (user.value?.id) {
+            const res = await getRecommendedMaterials({ limit: 6 })
+            recommendedList.value = Array.isArray(res) ? res : (res.records || [])
+        } else {
+            recommendedList.value = []
+        }
+    } catch (error) {
+        console.error('获取推荐失败', error)
+        recommendedList.value = []
     }
 }
 
@@ -632,6 +687,26 @@ const handleCoverSuccess = (res) => {
 
 const handleFileSuccess = (res) => {
     materialForm.fileUrl = res.data
+    const fileName = fileList.value[0]?.name || ''
+    const extension = fileName.split('.').pop().toLowerCase()
+    materialForm.fileSize = (fileList.value[0]?.size / 1024 / 1024).toFixed(2) + 'MB'
+    materialForm.fileFormat = getFileFormat(extension)
+}
+
+const getFileFormat = (extension) => {
+    const formatMap = {
+        'pdf': 'PDF',
+        'doc': 'Word',
+        'docx': 'Word',
+        'zip': '压缩包',
+        'rar': '压缩包',
+        'mp4': '视频',
+        'avi': '视频',
+        'mp3': '音频',
+        'wav': '音频',
+        'ogg': '音频'
+    }
+    return formatMap[extension] || '其他'
 }
 
 const submitForm = async () => {
@@ -950,6 +1025,100 @@ const handleDelete = (id) => {
     font-weight: 600;
 }
 
+.recommend-section {
+    margin-top: 20px;
+}
+
+.recommend-banner {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    padding: 15px 20px;
+    margin-bottom: 20px;
+}
+
+.recommend-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.recommend-icon {
+    font-size: 18px;
+}
+
+.recommend-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+}
+
+.recommend-desc {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.recommend-scroll {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 5px;
+}
+
+.recommend-scroll::-webkit-scrollbar {
+    height: 4px;
+}
+
+.recommend-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+}
+
+.recommend-card {
+    flex-shrink: 0;
+    width: 140px;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.recommend-card:hover {
+    transform: scale(1.03);
+}
+
+.recommend-image {
+    width: 100%;
+    height: 80px;
+    background: #f5f5f5;
+}
+
+.recommend-img {
+    width: 100%;
+    height: 100%;
+}
+
+.recommend-info {
+    padding: 8px 10px;
+}
+
+.recommend-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: #333;
+    margin: 0 0 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.recommend-price {
+    font-size: 13px;
+    font-weight: 600;
+    color: #f56c6c;
+}
+
 .material-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1022,6 +1191,15 @@ const handleDelete = (id) => {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 8px;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.format-tag {
+    font-size: 11px;
+    padding: 0 6px;
+    height: 20px;
+    line-height: 20px;
 }
 
 .stock-badge {
@@ -1038,7 +1216,7 @@ const handleDelete = (id) => {
     font-size: 16px;
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: 12px;
+    margin-bottom: 8px;
     line-height: 1.4;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -1047,10 +1225,47 @@ const handleDelete = (id) => {
     flex: 1;
 }
 
-.card-sales {
+.card-meta {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 6px;
     font-size: 12px;
     color: #64748b;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.meta-item .el-icon {
+    font-size: 12px;
+}
+
+.card-stats {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 6px;
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.stat-item {
+    white-space: nowrap;
+}
+
+.card-rating {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     margin-bottom: 8px;
+}
+
+.rating-score {
+    font-size: 12px;
+    color: #666;
+    font-weight: 500;
 }
 
 .card-footer {

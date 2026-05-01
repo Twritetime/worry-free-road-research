@@ -18,7 +18,7 @@ const normalizeImageUrl = (value) => {
 
 const request = axios.create({
     baseURL: 'http://localhost:8080',
-    timeout: 5000,
+    timeout: 30000,
     withCredentials: true
 })
 

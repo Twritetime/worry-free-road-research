@@ -99,7 +99,7 @@
                  </div>
              </div>
              
-             <div class="admin-actions" v-if="isAdmin" @click.stop>
+             <div class="admin-actions" v-if="isFrontAdmin" @click.stop>
                 <el-button circle size="small" type="danger" :icon="Delete" @click="handleDelete(item)"></el-button>
             </div>
           </div>
@@ -132,7 +132,7 @@ import dayjs from 'dayjs'
 
 const router = useRouter()
 const userStore = useUserStore()
-const { isAdmin, isLoggedIn } = storeToRefs(userStore)
+const { isFrontAdmin, isLoggedIn } = storeToRefs(userStore)
 
 const postList = ref([])
 const loading = ref(false)

@@ -1,6 +1,7 @@
 <script setup>
 import NavBar from '@/components/NavBar.vue'
 import Footer from '@/components/Footer.vue'
+import AiChat from '@/components/AiChat.vue'
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 
@@ -15,6 +16,7 @@ const isAdminLayout = computed(() => route.path.startsWith('/admin'))
       <router-view></router-view>
     </div>
     <Footer v-if="!isAdminLayout" />
+    <AiChat v-if="!isAdminLayout" />
   </div>
 </template>
 

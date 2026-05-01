@@ -36,9 +36,34 @@ alipay:
   appPrivateKey: MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCcMLyuewnhxGROOV4fQF0CFuek1ahOhIRsH93Ag0NbXhscYfbuki970+Ju71G7M004MdiV99G0lWkSHSEeTWk3jOZzPGjJvQKl7YsqEDZhRY9lo06SQFeuJGMY9+//ES17zM0qMgrL3MjdDsQeTOm9t5/UzOUqAU81O/LKWSLOq9wAn+CzrXrEh3u1jIz4Uvg/YrPXhwKu5xvjP0C6qhzW+sQzW2JuTiIkC9sEnn9g1WHGU5kAR+F6IwBfcshk9DzqkBuSMxk0n/DhV3HAa4DptBtohSRq2ETnf9L/Pt4gFMEgL/5kBvCpnCUxe3NOGLT8o8nBl3s06y3ERXwpC/rbAgMBAAECggEAFFHK2jArkvGH0x1nf01STElKjYk2QjC/QYnLwZXSF3rgsAqWo2blQojINoJv8Zi0/RCPCsOYxpOBfdfITTbo708nU+qR/1zVkVyb9DbzvCfehex+9kvknEUjl0X6NQa5EhgMwOaNvQPWJdwb6406A3J2GqslTReqhFRuO6DpBFXnOssoprUUK8C+QtwL14wK/SgwZQOycmGSYhzYcSMvMpbgPzXu0qtQHhZtzyUvFn9jCRFpnNtfNUHX6u3FVCJuPNn8rSxV7nzrN0GLU7N8s/JAHDrq+3Ih7jgw38yOyHx5tmYt96jM8oT7tax0V9jBvgmNuDH71UWplOJzAG/xIQKBgQDWj5C5Emn72m8uVReM/U5C/qK49hBIY+p92mAjIfnG0R27dJq8TjLPfqYxrFt5wRmkHTgJG+8Duu4Lbzjq/pkuNUcACqWBVUdR44BA2sVw6g+sNmSlJrTCbFUTy1U0ttZCcUrkUyjVfkyg+GGxVRhJ4gTj3DumTA+dIdJOIP4/OQKBgQC6WzBR6QiPCxiKwu60FmfG7p++6b+GxCudYjECZMFhcINKvT7vuwkp45gbosGLMDQJytfdDNo3JRU22hOLT+dTq0ANzYr6VRTzqLmCDKhkcruNcogMvKD56cdEwgMLzemyLmNCXYfLM2tvAU7IY57Ja9TkSDZrLlo/jGj5da32swKBgBKv9l7oJ6rz33Mdnit9dG+JVgreA5UKfsXvWyg0MVkLpZdKFKAJ/4rq8PaqmF0GYIFWuiaw9CRTB6CfU0nEWvsXUNPEGZ4mG0wakHUVmNS4zhylsCZiNKQqY06SCx3IPukSjP9N7uSJV4s9luSnELJ+qQZfjCJzxXheFb8QSJShAoGAR+MfW6maTJvKJtUVgdDWzY2Ff/7pjBImhPq4zySQ2Iavjug72/x5h3gtWBPLt2ar3E8sQDBSCU27xkIPogD7ynHYLrrobrLddzTSAtHhL4Z2xRS2WLt3GZDN9r8kr6wKB1sPnS05UfCO8+48Nt7/BNIc+MbGf0gNNlByujBkIDMCgYB1Ly22P1Qx2Kgohl3qb7or9xYuCHiiO0tp54FXrGTOwNfm3CN6W1yULpyCuGaSc/lPGLyRIAosJx8Pys5Ai6fMDK1I1e+NHXehxyYHViESQSurZAOfFrT8Tege+Mn+utjVC7q5Adn68YElRyCnT6DifO3M63tw0G0yyBpjWml0uA==
   alipayPublicKey: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAgi2Pj00h5xI1R+P0tkQep6iHgPt6YGFymQmRB7jeC4y6TiibuViQe38pgJX72Q4iuACKfjw9MrTL1Ic7BmtlLCDKUCK3jjyYZWGXgYMKZ7Y3JuGPhgRtGSElHiO0sgJiNqkJzzZlJEYEgLo+knMmnaFTbUBKAhaNx26BZgI7YUZOI9YaL5NPNH/MGfyvto6dzj3kdxmgYWHAEakYx9SgZ2jLWjaW/+rPh4DAJ2Q3m7AvAS9mqfA8TpfRx9NtkpWxS1fG2KNkoJFxIhwd//mlkABGSoRvFR7ngWPNl53dEAks1qRJ29iuGon+wRQPGppy9AonN/hV60lzCOSum5dIkwIDAQAB
   notifyUrl: http://d6bb9254.natappfree.cc/order/alipay-notify
-  returnUrl: http://d6bb9254.natappfree.cc/order/alipay-return
-  frontendReturnUrl: http://localhost:5173/order/success
+  returnUrl: http://localhost:5173/order/list
+  frontendReturnUrl: http://localhost:5173/order/list
   gatewayUrl: https://openapi-sandbox.dl.alipaydev.com/gateway.do
   format: json
   charset: UTF-8
   signType: RSA2
+
+crawler:
+  schedule:
+    enabled: true
+    zhaoshengjianzhang:
+      cron: "0 0 8 * * ?"
+      url: "https://yz.chsi.com.cn/kyzx/"
+    zhuanyemulu:
+      cron: "0 0 9 * * ?"
+      url: "https://yz.chsi.com.cn/zsml/"
+    kaoshidagang:
+      cron: "0 0 10 * * ?"
+      url: "https://yz.chsi.com.cn/kyzx/"
+    fushixize:
+      cron: "0 0 11 * * ?"
+      url: "https://yz.chsi.com.cn/kyzx/"
+
+ai:
+  deepseek:
+    enabled: true
+    api-key: sk-9bb86d3cd0e3418c9776da92561c0155
+    base-url: https://api.deepseek.com
+    model: deepseek-chat
+    max-tokens: 1000
+    temperature: 0.7

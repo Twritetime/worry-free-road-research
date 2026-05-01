@@ -34,17 +34,39 @@
              <div class="product-price-area">
                 <span class="currency">¥</span>
                 <span class="price">{{ material.price }}</span>
+                <span v-if="material.originalPrice && material.originalPrice > material.price" class="original-price">¥{{ material.originalPrice }}</span>
+                <div v-if="material.rating" class="rating-display">
+                  <el-rate v-model="material.rating" disabled :max="5" />
+                  <span class="rating-text">{{ material.rating.toFixed(1) }} 分</span>
+                </div>
              </div>
 
              <div class="product-specs">
                 <div class="spec-row">
-                    <span class="spec-label">文件格式</span>
-                    <span class="spec-value">{{ material.specs || 'PDF' }}</span>
+                    <span class="spec-label">资料格式</span>
+                    <span class="spec-value">{{ material.fileFormat || 'PDF' }}</span>
+                </div>
+                <div v-if="material.fileSize" class="spec-row">
+                    <span class="spec-label">文件大小</span>
+                    <span class="spec-value">{{ material.fileSize }}</span>
+                </div>
+                <div v-if="material.applyYear" class="spec-row">
+                    <span class="spec-label">适用年份</span>
+                    <span class="spec-value">{{ material.applyYear }}考研</span>
+                </div>
+                <div v-if="material.author" class="spec-row">
+                    <span class="spec-label">作者</span>
+                    <span class="spec-value">{{ material.author }}</span>
                 </div>
                 <div class="spec-row">
                     <span class="spec-label">发货方式</span>
                     <span class="spec-value">管理员手动发货</span>
                 </div>
+             </div>
+
+             <div v-if="material.tags" class="product-tags">
+                <span class="tags-label">标签：</span>
+                <el-tag v-for="tag in material.tags.split(',')" :key="tag" size="small" class="tag-item">{{ tag }}</el-tag>
              </div>
 
              <el-divider />
@@ -86,7 +108,16 @@
       <div class="detail-section">
           <div class="section-tabs">
               <span class="active-tab">商品详情</span>
+              <span v-if="material.previewContent" class="tab-item" @click="showPreview = !showPreview">
+                  {{ showPreview ? '收起预览' : '查看预览' }}
+              </span>
           </div>
+          
+          <div v-if="showPreview && material.previewContent" class="preview-content">
+              <h3>资料预览</h3>
+              <pre>{{ material.previewContent }}</pre>
+          </div>
+          
           <div class="section-content" v-html="material.description || '暂无描述'"></div>
       </div>
     </div>
@@ -101,6 +132,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { getMaterialById } from '@/api/material'
 import { addToCart, createOrder, getOrderList } from '@/api/trade'
 import { toggleFavorite, checkFavorite } from '@/api/favorite'
+import { recordBehavior } from '@/api/behavior'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import { storeToRefs } from 'pinia'
@@ -118,6 +150,7 @@ const hasPurchased = ref(false)
 const pendingShipment = ref(false)
 const isFavorite = ref(false)
 const autoDownloadTriggered = ref(false)
+const showPreview = ref(false)
 
 const categoryMap = {
   'public': '公共课',
@@ -150,6 +183,7 @@ const fetchMaterialDetail = async (id) => {
       if (user.value.id) {
           checkPurchasedStatus(id)
           checkFavoriteStatus(id)
+          recordViewBehavior()
       }
     }
   } catch (error) {
@@ -160,6 +194,20 @@ const fetchMaterialDetail = async (id) => {
   }
 }
 
+const recordViewBehavior = async () => {
+    if (!material.value.id) return
+    try {
+        await recordBehavior({
+            behaviorType: 1,
+            targetType: 1,
+            targetId: material.value.id,
+            targetTitle: material.value.name
+        })
+    } catch (error) {
+        console.error('记录浏览行为失败', error)
+    }
+}
+
 const checkPurchasedStatus = async (materialId) => {
     try {
         const orders = await getOrderList(user.value.id)
@@ -168,11 +216,6 @@ const checkPurchasedStatus = async (materialId) => {
         )
         hasPurchased.value = matchedOrders.some(order => order.status === 3)
         pendingShipment.value = !hasPurchased.value && matchedOrders.some(order => order.status === 1)
-        if (hasPurchased.value && material.value.fileUrl && !autoDownloadTriggered.value) {
-            autoDownloadTriggered.value = true
-            ElMessage.success('订单已发货，正在跳转下载链接')
-            window.location.assign(material.value.fileUrl)
-        }
     } catch (error) {
         console.error(error)
     }
@@ -201,11 +244,19 @@ const handleToggleFavorite = async () => {
         await toggleFavorite({
             userId: user.value.id,
             targetId: material.value.id,
-            targetType: 3, // Material type
+            targetType: 3,
             targetTitle: material.value.name,
             targetCover: material.value.coverImg
         })
         isFavorite.value = !isFavorite.value
+        if (isFavorite.value) {
+            await recordBehavior({
+                behaviorType: 2,
+                targetType: 1,
+                targetId: material.value.id,
+                targetTitle: material.value.name
+            })
+        }
         ElMessage.success(isFavorite.value ? '已收藏' : '已取消收藏')
     } catch (error) {
         ElMessage.error('操作失败')
@@ -237,17 +288,22 @@ const handleBuy = async () => {
         return
     }
     try {
-        // Direct buy usually creates an order and redirects to payment
-        // For simplicity reusing cart or create order directly
+        sessionStorage.setItem('orderReturnUrl', window.location.pathname)
         const order = await createOrder({
             userId: user.value.id,
             materialId: material.value.id,
             quantity: quantity.value
         })
-        // Assuming createOrder returns orderId or order object
+        await recordBehavior({
+            behaviorType: 3,
+            targetType: 1,
+            targetId: material.value.id,
+            targetTitle: material.value.name
+        })
         ElMessage.success('订单创建成功')
-        router.push('/order/list') 
+        router.push('/order/list')
     } catch (error) {
+        sessionStorage.removeItem('orderReturnUrl')
         console.error(error)
     }
 }
@@ -355,6 +411,25 @@ const handleDownload = () => {
     font-weight: 700;
 }
 
+.original-price {
+    font-size: 16px;
+    color: #999;
+    text-decoration: line-through;
+    margin-left: 10px;
+}
+
+.rating-display {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.rating-text {
+    margin-left: 10px;
+    color: #666;
+    font-size: 14px;
+}
+
 .product-specs {
     margin-bottom: 25px;
 }
@@ -414,6 +489,57 @@ const handleDownload = () => {
 .favorite-action {
     margin-top: 15px;
     text-align: right;
+}
+
+.product-tags {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.tags-label {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-right: 10px;
+}
+
+.tag-item {
+    margin-right: 8px;
+    margin-bottom: 5px;
+}
+
+.preview-content {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.preview-content h3 {
+    margin-top: 0;
+    color: var(--text-primary);
+}
+
+.preview-content pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: inherit;
+    line-height: 1.8;
+    color: var(--text-primary);
+}
+
+.tab-item {
+    display: inline-block;
+    padding: 15px 30px;
+    font-size: 16px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.tab-item:hover {
+    color: var(--primary-color);
 }
 
 .detail-section {

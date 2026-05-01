@@ -194,6 +194,8 @@ const currentNewsId = ref(null)
 const dialogVisible = ref(false)
 const dialogTitle = ref('发布资讯')
 const formRef = ref(null)
+const isUploading = ref(false)
+const coverUploadProcessed = ref(false)
 const form = reactive({
   id: null,
   title: '',
@@ -303,6 +305,8 @@ const handleComments = (row) => {
 const handleAdd = () => {
   dialogTitle.value = '发布资讯'
   Object.assign(form, { id: null, title: '', type: NEWS_TYPE_OPTIONS[0].value, coverImg: '', content: '', createTime: '', updateTime: '' })
+  isUploading.value = false
+  coverUploadProcessed.value = false
   dialogVisible.value = true
 }
 
@@ -313,6 +317,8 @@ const handleEdit = (row) => {
     createTime: normalizeDateTime(row.createTime),
     updateTime: normalizeDateTime(row.updateTime)
   })
+  isUploading.value = false
+  coverUploadProcessed.value = false
   dialogVisible.value = true
 }
 
@@ -327,33 +333,59 @@ const handleDelete = (row) => {
 }
 
 const uploadRequest = async (options) => {
+  if (isUploading.value) {
+    return
+  }
+  isUploading.value = true
   const formData = new FormData()
   formData.append('file', options.file)
   try {
     const res = await request.post('/file/upload', formData)
+    console.log('Upload request response:', res)
     options.onSuccess(res)
   } catch (error) {
+    console.error('Upload request error:', error)
     options.onError(error)
+  } finally {
+    isUploading.value = false
   }
 }
 
 const handleCoverSuccess = (res) => {
-  if (typeof res === 'string') {
+  console.log('handleCoverSuccess - res:', res, 'type:', typeof res)
+  console.log('handleCoverSuccess - coverUploadProcessed:', coverUploadProcessed.value)
+  console.log('handleCoverSuccess - form.coverImg before:', form.coverImg)
+  
+  // 防止重复处理
+  if (coverUploadProcessed.value) {
+    console.log('handleCoverSuccess - already processed, returning')
+    return
+  }
+  coverUploadProcessed.value = true
+  
+  // request.js 拦截器已经处理了 res.code === 200 的情况，返回的是 res.data
+  // 所以这里 res 应该直接是 URL 字符串
+  if (typeof res === 'string' && res) {
     form.coverImg = res
-    return
-  }
-  if (res && typeof res.data === 'string') {
+    console.log('handleCoverSuccess - set from string:', res)
+    ElMessage.success('封面上传成功')
+  } else if (res && typeof res.data === 'string') {
+    // 兼容直接返回完整响应对象的情况
     form.coverImg = res.data
-    return
+    console.log('handleCoverSuccess - set from res.data:', res.data)
+    ElMessage.success('封面上传成功')
+  } else {
+    console.log('handleCoverSuccess - invalid format, res:', res)
+    // 只有在封面没有设置的情况下才显示错误
+    if (!form.coverImg) {
+      ElMessage.error('封面上传失败：无法获取图片地址')
+    }
   }
-  if (res && typeof res.url === 'string') {
-    form.coverImg = res.url
-    return
-  }
-  ElMessage.error('封面上传失败')
+  console.log('handleCoverSuccess - form.coverImg after:', form.coverImg)
 }
 
-const handleCoverError = () => {
+const handleCoverError = (error) => {
+  console.error('handleCoverError called with:', error)
   ElMessage.error('封面上传失败')
 }
 

@@ -32,12 +32,16 @@ public class MaterialController {
                                        @RequestParam(defaultValue = "10") Integer pageSize,
                                        @RequestParam(required = false) String keyword,
                                        @RequestParam(required = false) String category,
+                                       @RequestParam(required = false) String tags,
+                                       @RequestParam(required = false) String applyYear,
                                        @RequestParam(defaultValue = "comprehensive") String sortBy,
                                        @RequestParam(defaultValue = "desc") String sortOrder) {
         Page<Material> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<Material> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.like(StrUtil.isNotBlank(keyword), Material::getName, keyword);
         queryWrapper.eq(StrUtil.isNotBlank(category), Material::getCategory, category);
+        queryWrapper.like(StrUtil.isNotBlank(tags), Material::getTags, tags);
+        queryWrapper.eq(StrUtil.isNotBlank(applyYear), Material::getApplyYear, applyYear);
         queryWrapper.eq(Material::getStatus, 1);
         applySort(queryWrapper, sortBy, sortOrder);
         
@@ -177,6 +181,45 @@ public class MaterialController {
     @RequireRoles({User.ROLE_ADMIN, User.ROLE_OPERATOR})
     public Result<?> delete(@PathVariable Long id) {
         materialService.removeById(id);
+        return Result.success();
+    }
+
+    /**
+     * 增加下载次数
+     */
+    @PostMapping("/{id}/download")
+    public Result<?> incrementDownload(@PathVariable Long id) {
+        Material material = materialService.getById(id);
+        if (material == null) {
+            return Result.error("资料不存在");
+        }
+        if (material.getDownloadCount() == null) {
+            material.setDownloadCount(0);
+        }
+        material.setDownloadCount(material.getDownloadCount() + 1);
+        materialService.updateById(material);
+        return Result.success();
+    }
+
+    /**
+     * 更新评分
+     */
+    @PutMapping("/{id}/rating")
+    public Result<?> updateRating(@PathVariable Long id, @RequestParam Double rating) {
+        if (rating < 1 || rating > 5) {
+            return Result.error("评分必须在1-5之间");
+        }
+        Material material = materialService.getById(id);
+        if (material == null) {
+            return Result.error("资料不存在");
+        }
+        Double currentRating = material.getRating();
+        if (currentRating == null || currentRating == 0) {
+            material.setRating(rating);
+        } else {
+            material.setRating((currentRating + rating) / 2);
+        }
+        materialService.updateById(material);
         return Result.success();
     }
 

@@ -164,8 +164,9 @@ const totalPrice = computed(() => {
 
 const handleCheckout = async () => {
     if (multipleSelection.value.length === 0) return
-    
+
     try {
+        sessionStorage.setItem('orderReturnUrl', '/cart')
         const orderData = {
             userId: user.value.id,
             totalAmount: totalPrice.value,
@@ -178,14 +179,9 @@ const handleCheckout = async () => {
         }
         await createOrder(orderData)
         ElMessage.success('下单成功')
-        // Redirect to profile orders tab instead of profile main
-        // We need to handle this navigation or pass a query param
-        // But for now simply redirecting to profile is okay, user can click orders.
-        // Or better: router.push({ path: '/profile', query: { tab: 'orders' } }) if Profile supports it.
-        // My Profile.vue implementation uses internal state activeMenu defaulting to 'info'.
-        // I should probably make Profile.vue aware of query params, but for now simple redirect.
-        router.push('/profile') 
+        router.push('/order/list')
     } catch (error) {
+        sessionStorage.removeItem('orderReturnUrl')
         ElMessage.error('下单失败')
     }
 }

@@ -70,7 +70,7 @@
                 <span>{{ item.label }}</span>
                 <el-icon class="active-indicator" v-if="activeCategory === item.key"><ArrowRight /></el-icon>
             </div>
-             <div class="admin-action" v-if="isAdmin">
+             <div class="admin-action" v-if="isFrontAdmin">
                 <el-button type="primary" class="full-width" :icon="Plus" @click="handleAdd">发布指南</el-button>
             </div>
         </div>
@@ -115,7 +115,7 @@
                 <div class="guide-arrow">
                     <el-button circle plain><el-icon><ArrowRight /></el-icon></el-button>
                 </div>
-                 <div class="admin-actions" v-if="isAdmin" @click.stop>
+                 <div class="admin-actions" v-if="isFrontAdmin" @click.stop>
                     <el-button circle size="small" :icon="Edit" @click="handleEdit(item)"></el-button>
                     <el-button circle size="small" type="danger" :icon="Delete" @click="handleDelete(item)"></el-button>
                 </div>
@@ -178,7 +178,7 @@ import dayjs from 'dayjs'
 
 const router = useRouter()
 const userStore = useUserStore()
-const { isAdmin } = storeToRefs(userStore)
+const { isFrontAdmin } = storeToRefs(userStore)
 
 const guideList = ref([])
 const loading = ref(false)
