@@ -18,6 +18,9 @@
           <el-button text @click="minimizeChat" class="action-btn">
             <el-icon><Minus /></el-icon>
           </el-button>
+          <el-button text @click="clearHistory" class="action-btn" title="清空对话">
+            <el-icon><Delete /></el-icon>
+          </el-button>
           <el-button text @click="closeChat" class="action-btn close-btn">
             <el-icon><CloseBold /></el-icon>
           </el-button>
@@ -128,7 +131,7 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { storeToRefs } from 'pinia'
 import { ElMessage } from 'element-plus'
-import { Service, Close, Promotion, Warning, Minus, FullScreen, CloseBold } from '@element-plus/icons-vue'
+import { Service, Close, Promotion, Warning, Minus, FullScreen, CloseBold, Delete } from '@element-plus/icons-vue'
 import { sendChatMessage, getChatHistory, clearChatHistory } from '@/api/ai'
 
 const router = useRouter()
@@ -184,14 +187,14 @@ const quickQuestions = [
 watch(isOpen, async (newVal) => {
   if (newVal) {
     unreadCount.value = 0
-    if (isLoggedIn.value && sessionId.value) {
+    if (isLoggedIn.value) {
       await loadHistory()
     }
   }
 })
 
 watch(isLoggedIn, async (newVal) => {
-  if (newVal && sessionId.value) {
+  if (newVal) {
     await loadHistory()
   }
 })
@@ -245,8 +248,8 @@ const loadHistory = async () => {
     const res = await getChatHistory({ sessionId: sessionId.value, limit: 20 })
     if (res && Array.isArray(res)) {
       messages.value = res
-      sessionId.value = res.length > 0 ? res[0].sessionId : ''
-      if (sessionId.value) {
+      if (res.length > 0 && res[0].sessionId) {
+        sessionId.value = res[0].sessionId
         localStorage.setItem('ai_session_id', sessionId.value)
       }
       scrollToBottom()
@@ -417,6 +420,23 @@ const handleClickOutside = (e) => {
     if (toggleBtn && !toggleBtn.contains(e.target)) {
       isOpen.value = false
     }
+  }
+}
+
+const clearHistory = async () => {
+  if (!isLoggedIn.value) {
+    ElMessage.warning('请先登录')
+    return
+  }
+  try {
+    await clearChatHistory(sessionId.value)
+    messages.value = []
+    sessionId.value = ''
+    localStorage.removeItem('ai_session_id')
+    ElMessage.success('对话历史已清空')
+  } catch (error) {
+    console.error('Failed to clear history:', error)
+    ElMessage.error('清空失败，请重试')
   }
 }
 </script>

@@ -96,7 +96,15 @@ public class AiChatServiceImpl implements AiChatService {
     @Override
     public List<ChatMessage> getHistory(Long userId, String sessionId, int limit) {
         if (StrUtil.isBlank(sessionId)) {
-            sessionId = getOrCreateSessionId(userId);
+            LambdaQueryWrapper<ChatMessage> latestWrapper = new LambdaQueryWrapper<>();
+            latestWrapper.eq(ChatMessage::getUserId, userId)
+                    .orderByDesc(ChatMessage::getCreateTime)
+                    .last("LIMIT 1");
+            List<ChatMessage> latestMessages = chatMessageMapper.selectList(latestWrapper);
+            if (latestMessages.isEmpty()) {
+                return new ArrayList<>();
+            }
+            sessionId = latestMessages.get(0).getSessionId();
         }
         LambdaQueryWrapper<ChatMessage> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ChatMessage::getUserId, userId)
