@@ -221,11 +221,12 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         try {
             AlipayTradeQueryResponse response = alipayClient.execute(request);
             if (response.isSuccess()) {
-                String subCode = response.getSubCode();
-                if (subCode != null && subCode.contains("TRADE_NOT_EXIST")) {
-                    return null;
-                }
                 return response.getTradeStatus();
+            }
+            // 支付宝接口返回 code=40004 但 isSuccess()=true 时，sub_code 包含具体错误
+            String subCode = response.getSubCode();
+            if (subCode != null && subCode.contains("TRADE_NOT_EXIST")) {
+                return null;
             }
         } catch (AlipayApiException e) {
             log.error("支付宝交易查询异常: {}", orderNo, e);
