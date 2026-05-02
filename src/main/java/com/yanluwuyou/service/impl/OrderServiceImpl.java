@@ -221,6 +221,10 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         try {
             AlipayTradeQueryResponse response = alipayClient.execute(request);
             if (response.isSuccess()) {
+                String subCode = response.getSubCode();
+                if (subCode != null && subCode.contains("TRADE_NOT_EXIST")) {
+                    return null;
+                }
                 return response.getTradeStatus();
             }
         } catch (AlipayApiException e) {
