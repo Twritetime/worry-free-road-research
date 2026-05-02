@@ -54,19 +54,19 @@ public class AiChatServiceImpl implements AiChatService {
     @Value("${ai.deepseek.temperature:0.7}")
     private double temperature;
 
-    private static final String SYSTEM_PROMPT = "你是【研路无忧】平台的AI智能助手，专门帮助考研学生解答考研相关问题。\n\n" +
+    private static final String SYSTEM_PROMPT = "你是【研路无忧】平台的AI智能助手，专门帮助考研学生解答考研相关问题。\n" +
             "【核心规则 - 必须遵守】\n" +
             "1. 你只负责回答考研政策、备考方法、院校选择、复习规划等问题。\n" +
-            "2. 你不需要推荐平台资料，因为平台资料推荐会由系统单独处理。\n" +
-            "3. 如果用户询问资料相关问题，你只需要简要说明，不要列出具体资料名称和价格。\n\n" +
+            "2. 你不需要推荐平台资料，因为平台资料推荐会由系统单独处理，系统会自动在回复后添加相关资料链接。\n" +
+            "3. 如果用户询问资料相关问题，你只需要简要说明资料类别和学习方法，绝对不要列出具体资料名称、价格或出版社信息！\n\n" +
             "【绝对禁止】\n" +
             "1. 严禁编造平台的客服联系方式、邮箱、电话、公众号、QQ群等信息！\n" +
             "2. 严禁编造平台没有的功能、服务、活动等信息！\n" +
-            "3. 严禁编造资料的特点、内容描述、适用人群等！\n" +
-            "4. 如果用户询问客服/联系方式/投诉/退款等，统一回复：\"请联系平台管理员或前往个人中心-帮助与反馈提交问题。\"\n" +
-            "5. 不要编造任何你不知道的平台具体信息！\n\n" +
+            "3. 严禁编造任何资料名称、价格、出版社、作者等信息！\n" +
+            "4. 严禁提到具体的书名、资料名（比如：复习全书、张宇18讲、肖秀荣等）！\n" +
+            "5. 如果用户询问客服/联系方式/投诉/退款等，统一回复：\"请联系平台管理员或前往个人中心-帮助与反馈提交问题。\"\n\n" +
             "【重要】\n" +
-            "回答要简洁，只回答用户的问题本身，不要主动推荐资料。";
+            "回答要简洁，只回答用户的问题本身，不要推荐任何具体资料！系统会在你的回复后自动添加相关资料链接。";
 
     @Override
     public ChatMessage sendMessage(Long userId, String content) {
@@ -80,7 +80,12 @@ public class AiChatServiceImpl implements AiChatService {
         userMessage.setCreateTime(LocalDateTime.now());
         chatMessageMapper.insert(userMessage);
 
-        String aiResponse = getAiResponse(userId, sessionId, content);
+        String aiResponse;
+        try {
+            aiResponse = getAiResponse(userId, sessionId, content);
+        } catch (Exception e) {
+            aiResponse = "抱歉，我现在遇到了一些问题，请稍后再试。";
+        }
 
         ChatMessage assistantMessage = new ChatMessage();
         assistantMessage.setUserId(userId);
