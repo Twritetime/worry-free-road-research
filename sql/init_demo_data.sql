@@ -28,12 +28,12 @@ SET FOREIGN_KEY_CHECKS = 1;
 
 -- ==================== 1. 用户表 (sys_user) ====================
 INSERT INTO `sys_user` (`id`, `username`, `password`, `nickname`, `email`, `phone`, `avatar`, `role`, `create_time`, `update_time`, `deleted`) VALUES
-(1, 'admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EO', '管理员', 'admin@yanluwuyou.com', '13800138000', 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png', 'ADMIN', '2025-01-01 10:00:00', '2025-01-01 10:00:00', 0),
-(2, 'zhangsan', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EO', '张三', 'zhangsan@qq.com', '13800138001', NULL, 'STUDENT', '2025-01-15 14:30:00', '2025-01-15 14:30:00', 0),
-(3, 'lisi', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EO', '李四', 'lisi@qq.com', '13800138002', NULL, 'STUDENT', '2025-02-01 09:00:00', '2025-02-01 09:00:00', 0),
-(4, 'wangwu', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EO', '王五', 'wangwu@qq.com', '13800138003', NULL, 'STUDENT', '2025-02-10 16:00:00', '2025-02-10 16:00:00', 0),
-(5, 'zhaoliu', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EO', '赵六', 'zhaoliu@qq.com', '13800138004', NULL, 'STUDENT', '2025-03-01 11:00:00', '2025-03-01 11:00:00', 0),
-(6, 'operator1', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EO', '运营人员', 'operator@yanluwuyou.com', '13800138005', NULL, 'OPERATOR', '2025-01-01 10:00:00', '2025-01-01 10:00:00', 0);
+(1, 'admin', 'e10adc3949ba59abbe56e057f20f883e', '管理员', 'admin@yanluwuyou.com', '13800138000', 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png', 'ADMIN', '2025-01-01 10:00:00', '2025-01-01 10:00:00', 0),
+(2, 'zhangsan', 'e10adc3949ba59abbe56e057f20f883e', '张三', 'zhangsan@qq.com', '13800138001', NULL, 'STUDENT', '2025-01-15 14:30:00', '2025-01-15 14:30:00', 0),
+(3, 'lisi', 'e10adc3949ba59abbe56e057f20f883e', '李四', 'lisi@qq.com', '13800138002', NULL, 'STUDENT', '2025-02-01 09:00:00', '2025-02-01 09:00:00', 0),
+(4, 'wangwu', 'e10adc3949ba59abbe56e057f20f883e', '王五', 'wangwu@qq.com', '13800138003', NULL, 'STUDENT', '2025-02-10 16:00:00', '2025-02-10 16:00:00', 0),
+(5, 'zhaoliu', 'e10adc3949ba59abbe56e057f20f883e', '赵六', 'zhaoliu@qq.com', '13800138004', NULL, 'STUDENT', '2025-03-01 11:00:00', '2025-03-01 11:00:00', 0),
+(6, 'operator1', 'e10adc3949ba59abbe56e057f20f883e', '运营人员', 'operator@yanluwuyou.com', '13800138005', NULL, 'OPERATOR', '2025-01-01 10:00:00', '2025-01-01 10:00:00', 0);
 
 -- ==================== 2. 收货地址表 (address) ====================
 INSERT INTO `address` (`id`, `user_id`, `receiver_name`, `receiver_phone`, `province`, `city`, `district`, `detail_address`, `is_default`, `create_time`, `update_time`, `deleted`) VALUES
