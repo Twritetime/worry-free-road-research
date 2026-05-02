@@ -144,14 +144,13 @@
                 </div>
                 <div class="flash-grid">
                   <div v-for="item in flashSaleList" :key="item.id" class="flash-card" @click="viewDetail(item.id)">
-                    <div class="flash-image">
+                    <div class="flash-image" @click.stop="viewDetail(item.id)">
                       <el-image
                         :src="item.coverImg || 'https://placehold.co/220x160?text=Material'"
                         :preview-src-list="[item.coverImg]"
                         fit="cover"
                         :preview-teleported="true"
                         class="material-img"
-                        @click.stop
                       />
                       <span class="discount-tag">{{ getDiscountText(item) }}</span>
                     </div>
@@ -964,7 +963,7 @@ const handleDelete = (id) => {
 }
 
 .flash-image {
-    height: 120px;
+    height: 160px;
     position: relative;
 }
 
@@ -1090,7 +1089,7 @@ const handleDelete = (id) => {
 
 .recommend-image {
     width: 100%;
-    height: 80px;
+    height: 100px;
     background: #f5f5f5;
 }
 
@@ -1144,7 +1143,7 @@ const handleDelete = (id) => {
 }
 
 .card-image {
-    height: 320px;
+    height: 200px;
     position: relative;
     overflow: hidden;
     background: #f8f9fa;

@@ -69,6 +69,18 @@
     <!-- Edit Dialog -->
     <el-dialog v-model="dialogVisible" title="编辑用户" width="500px">
       <el-form :model="form" label-width="80px">
+        <el-form-item label="头像">
+          <el-upload
+            class="avatar-uploader"
+            :action="uploadUrl"
+            :show-file-list="false"
+            :on-success="handleAvatarSuccess"
+            :before-upload="beforeAvatarUpload"
+          >
+            <img v-if="avatarSrc" :src="avatarSrc" class="avatar" />
+            <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
+          </el-upload>
+        </el-form-item>
         <el-form-item label="用户名">
           <el-input v-model="form.username" disabled />
         </el-form-item>
@@ -106,11 +118,13 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { getUserList, deleteUser, updateUser } from '@/api/user'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus } from '@element-plus/icons-vue'
 
 const defaultAvatar = 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
+const uploadUrl = 'http://localhost:8080/file/upload'
 const userList = ref([])
 const loading = ref(false)
 const pageNum = ref(1)
@@ -118,6 +132,36 @@ const pageSize = ref(10)
 const total = ref(0)
 const dialogVisible = ref(false)
 const form = reactive({})
+const formAvatar = ref('')
+
+const avatarSrc = computed(() => {
+  const avatar = formAvatar.value || form.avatar
+  if (!avatar) return defaultAvatar
+  if (/^https?:\/\//i.test(avatar)) return avatar
+  if (avatar.startsWith('/')) return `http://localhost:8080${avatar}`
+  return avatar
+})
+
+const handleAvatarSuccess = (res) => {
+  const url = res?.data || res
+  form.avatar = url
+  formAvatar.value = url
+  ElMessage.success('头像上传成功')
+}
+
+const beforeAvatarUpload = (file) => {
+  const isJPG = file.type === 'image/jpeg' || file.type === 'image/png'
+  const isLt2M = file.size / 1024 / 1024 < 2
+  if (!isJPG) {
+    ElMessage.error('头像只能是 JPG/PNG 格式!')
+    return false
+  }
+  if (!isLt2M) {
+    ElMessage.error('头像大小不能超过 2MB!')
+    return false
+  }
+  return true
+}
 const filters = reactive({
   username: '',
   phone: '',
@@ -199,6 +243,7 @@ const handleReset = () => {
 
 const handleEdit = (row) => {
   Object.assign(form, row)
+  formAvatar.value = row.avatar || ''
   dialogVisible.value = true
 }
 
@@ -255,5 +300,32 @@ onMounted(() => {
   margin-top: 20px;
   display: flex;
   justify-content: center;
+}
+.avatar-uploader {
+  width: 80px;
+  height: 80px;
+  border: 1px dashed #d9d9d9;
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s;
+}
+.avatar-uploader:hover {
+  border-color: #409eff;
+}
+.avatar-uploader-icon {
+  font-size: 28px;
+  color: #8c939d;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.avatar {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
 }
 </style>

@@ -160,7 +160,7 @@
         </el-row>
         
         <el-form-item label="标签" prop="tags">
-          <el-input v-model="form.tags" placeholder="逗号分隔，如: 政治,英语,数学" />
+          <el-input v-model="form.tags" placeholder="空格分隔，如: 政治 英语 数学" />
         </el-form-item>
         
         <el-form-item label="规格" prop="specs">
@@ -220,6 +220,7 @@
           <el-upload
             class="file-uploader"
             action="#"
+            drag
             :http-request="uploadFileRequest"
             :show-file-list="true"
             :file-list="fileList"
@@ -228,7 +229,8 @@
             :before-upload="beforeFileUpload"
             :limit="1"
           >
-            <el-button type="primary" plain :icon="Upload">点击上传资料文件</el-button>
+            <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+            <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
             <template #tip>
               <div class="el-upload__tip">
                 支持 PDF, Word, Zip, 视频, 音频等格式，文件大小不超过 50MB
@@ -255,7 +257,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Upload, Document } from '@element-plus/icons-vue'
+import { Plus, Upload, Document, UploadFilled } from '@element-plus/icons-vue'
 import { getMaterialListAll, saveMaterial, updateMaterial, deleteMaterial, updateMaterialStatus, swapMaterialOrder } from '@/api/material'
 import request from '@/utils/request'
 
@@ -626,6 +628,37 @@ onMounted(() => {
 
 .file-uploader {
   width: 100%;
+}
+
+.file-uploader .el-upload {
+  border: 1px dashed var(--el-border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s;
+  width: 100%;
+  padding: 20px;
+}
+
+.file-uploader .el-upload:hover {
+  border-color: var(--el-color-primary);
+}
+
+.file-uploader .el-icon--upload {
+  font-size: 48px;
+  color: #c0c4cc;
+  margin-bottom: 10px;
+}
+
+.file-uploader .el-upload__text {
+  color: #606266;
+  font-size: 14px;
+}
+
+.file-uploader .el-upload__text em {
+  color: #409eff;
+  font-style: normal;
 }
 
 .file-link-preview {

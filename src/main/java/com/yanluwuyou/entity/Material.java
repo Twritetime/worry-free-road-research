@@ -80,7 +80,7 @@ public class Material extends BaseEntity {
     private Integer downloadCount;
 
     /**
-     * 标签 (逗号分隔，如 政治,英语,数学)
+     * 标签 (空格分隔，如 政治 英语 数学)
      */
     private String tags;
 

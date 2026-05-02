@@ -66,7 +66,7 @@
 
              <div v-if="material.tags" class="product-tags">
                 <span class="tags-label">标签：</span>
-                <el-tag v-for="tag in material.tags.split(',')" :key="tag" size="small" class="tag-item">{{ tag }}</el-tag>
+                <el-tag v-for="tag in material.tags.split(/[,\s]+/)" :key="tag" size="small" class="tag-item">{{ tag }}</el-tag>
              </div>
 
              <el-divider />

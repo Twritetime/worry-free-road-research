@@ -117,6 +117,81 @@
         </el-row>
       </div>
 
+      <!-- 资料商城 Section -->
+      <div class="content-wrapper" v-if="materialList.length > 0">
+        <div class="section-header">
+            <h2 class="section-title">热门资料</h2>
+            <div class="header-actions">
+                <el-button v-if="isFrontAdmin" type="primary" link @click="$router.push('/materials')">管理资料</el-button>
+                <el-button link @click="$router.push('/materials')">查看更多 <el-icon><ArrowRight /></el-icon></el-button>
+            </div>
+        </div>
+        <div class="material-grid">
+            <div v-for="item in materialList" :key="item.id" class="material-card" @click="$router.push(`/materials/${item.id}`)">
+                <div class="material-image">
+                    <el-image :src="item.coverImg || 'https://placehold.co/300x200?text=Material'" fit="cover" class="material-img" />
+                    <span v-if="item.fileFormat" class="format-badge">{{ item.fileFormat }}</span>
+                </div>
+                <div class="material-info">
+                    <h4 class="material-name">{{ item.name }}</h4>
+                    <div class="material-meta">
+                        <span class="material-price">¥{{ item.price }}</span>
+                        <span v-if="item.originalPrice && item.originalPrice > item.price" class="material-origin">¥{{ item.originalPrice }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+      </div>
+
+      <!-- 报考指南 Section -->
+      <div class="content-wrapper" v-if="guideList.length > 0">
+        <div class="section-header">
+            <h2 class="section-title">报考指南</h2>
+            <div class="header-actions">
+                <el-button v-if="isFrontAdmin" type="primary" link @click="$router.push('/guides')">管理指南</el-button>
+                <el-button link @click="$router.push('/guides')">查看更多 <el-icon><ArrowRight /></el-icon></el-button>
+            </div>
+        </div>
+        <div class="guide-grid">
+            <div v-for="item in guideList" :key="item.id" class="guide-card" @click="$router.push(`/guides/${item.id}`)">
+                <div class="guide-icon">
+                    <el-icon><Document /></el-icon>
+                </div>
+                <div class="guide-content">
+                    <h4 class="guide-title">{{ item.title }}</h4>
+                    <p class="guide-meta">{{ item.institution || '未知院校' }} · {{ item.major || '未知专业' }}</p>
+                    <el-tag v-if="item.category" size="small">{{ getGuideCategoryLabel(item.category) }}</el-tag>
+                </div>
+            </div>
+        </div>
+      </div>
+
+      <!-- 交流论坛 Section -->
+      <div class="content-wrapper" v-if="postList.length > 0">
+        <div class="section-header">
+            <h2 class="section-title">热门帖子</h2>
+            <div class="header-actions">
+                <el-button v-if="isFrontAdmin" type="primary" link @click="$router.push('/forum')">管理帖子</el-button>
+                <el-button link @click="$router.push('/forum')">查看更多 <el-icon><ArrowRight /></el-icon></el-button>
+            </div>
+        </div>
+        <div class="forum-list">
+            <div v-for="item in postList" :key="item.id" class="forum-card" @click="$router.push(`/forum/${item.id}`)">
+                <div class="forum-content">
+                    <h4 class="forum-title">{{ item.title }}</h4>
+                    <div class="forum-meta">
+                        <span class="forum-author">{{ item.authorName || item.author || '匿名用户' }}</span>
+                        <span class="forum-time">{{ formatDate(item.createTime) }}</span>
+                    </div>
+                </div>
+                <div class="forum-stats">
+                    <span><el-icon><ChatLineSquare /></el-icon> {{ item.commentCount || 0 }}</span>
+                    <span>👍 {{ item.likeCount || 0 }}</span>
+                </div>
+            </div>
+        </div>
+      </div>
+
         <!-- Dialogs remain similar but with better styling classes if needed -->
         <el-dialog :title="formTitle" v-model="dialogVisible" width="600px" class="custom-dialog">
             <el-form :model="newsForm" label-width="80px" label-position="top">
@@ -143,8 +218,11 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowRight, Document, ChatDotRound, Trophy, Edit, Delete, Collection, Reading, Microphone } from '@element-plus/icons-vue'
+import { ArrowRight, Document, ChatDotRound, Trophy, Edit, Delete, Collection, Reading, Microphone, Folder, ChatLineSquare } from '@element-plus/icons-vue'
 import { getNewsList, createNews, updateNews, deleteNews } from '@/api/news'
+import { getMaterialListAll } from '@/api/material'
+import { getGuideListAll } from '@/api/guide'
+import { getPostListAll } from '@/api/post'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import { storeToRefs } from 'pinia'
@@ -154,6 +232,9 @@ const userStore = useUserStore()
 const { isFrontAdmin } = storeToRefs(userStore)
 
 const newsList = ref([])
+const materialList = ref([])
+const guideList = ref([])
+const postList = ref([])
 const loading = ref(false)
 const dialogVisible = ref(false)
 const newsForm = ref({})
@@ -177,17 +258,47 @@ const hotRecommendations = computed(() =>
 
 onMounted(() => {
     fetchNews()
+    fetchMaterials()
+    fetchGuides()
+    fetchPosts()
 })
 
 const fetchNews = async () => {
     loading.value = true
     try {
-        const res = await getNewsList({ pageNum: 1, pageSize: 6 }) // Fetch fewer for home page
+        const res = await getNewsList({ pageNum: 1, pageSize: 6 })
         newsList.value = res.records || []
     } catch (error) {
         console.error(error)
     } finally {
         loading.value = false
+    }
+}
+
+const fetchMaterials = async () => {
+    try {
+        const res = await getMaterialListAll({ pageNum: 1, pageSize: 4 })
+        materialList.value = res.records || []
+    } catch (error) {
+        console.error(error)
+    }
+}
+
+const fetchGuides = async () => {
+    try {
+        const res = await getGuideListAll({ pageNum: 1, pageSize: 4 })
+        guideList.value = res.records || []
+    } catch (error) {
+        console.error(error)
+    }
+}
+
+const fetchPosts = async () => {
+    try {
+        const res = await getPostListAll({ pageNum: 1, pageSize: 5 })
+        postList.value = res.records || []
+    } catch (error) {
+        console.error(error)
     }
 }
 
@@ -212,6 +323,16 @@ const getTypeLabel = (type) => {
 const formatDate = (dateStr) => {
     if (!dateStr) return ''
     return dateStr.split(' ')[0]
+}
+
+const getGuideCategoryLabel = (category) => {
+    const map = {
+        'zhaoshengjianzhang': '招生简章',
+        'zhuanyemulu': '专业目录',
+        'kaoshidagang': '考试大纲',
+        'fushixize': '复试细则'
+    }
+    return map[category] || category
 }
 
 const stripHtml = (html) => {
@@ -601,5 +722,197 @@ const handleSubmit = async () => {
     .hero-subtitle { font-size: 16px; }
     .hero-stats { gap: 20px; }
     .floating-card { display: none; }
+}
+
+/* 新增模块样式 */
+.material-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.material-card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.material-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+
+.material-image {
+    position: relative;
+    height: 160px;
+    overflow: hidden;
+}
+
+.material-image .material-img {
+    width: 100%;
+    height: 100%;
+}
+
+.format-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0,0,0,0.6);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.material-info {
+    padding: 12px;
+}
+
+.material-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.material-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.material-price {
+    color: #f59e0b;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.material-origin {
+    color: #9ca3af;
+    text-decoration: line-through;
+    font-size: 13px;
+}
+
+.guide-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.guide-card {
+    display: flex;
+    gap: 16px;
+    padding: 16px;
+    background: white;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.guide-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.guide-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.guide-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.guide-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 6px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.guide-meta {
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 6px;
+}
+
+.forum-list {
+    margin-top: 20px;
+}
+
+.forum-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: white;
+    border-radius: 10px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.forum-card:hover {
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.forum-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.forum-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: #1f2937;
+    margin-bottom: 6px;
+}
+
+.forum-meta {
+    display: flex;
+    gap: 16px;
+    font-size: 13px;
+    color: #9ca3af;
+}
+
+.forum-stats {
+    display: flex;
+    gap: 16px;
+    color: #6b7280;
+    font-size: 13px;
+}
+
+.forum-stats span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+@media (max-width: 768px) {
+    .material-grid { grid-template-columns: repeat(2, 1fr); }
+    .guide-grid { grid-template-columns: 1fr; }
 }
 </style>
