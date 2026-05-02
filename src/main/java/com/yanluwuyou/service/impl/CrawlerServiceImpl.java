@@ -88,6 +88,8 @@ public class CrawlerServiceImpl implements CrawlerService {
         int count = 0;
         Document doc = createConnection(listUrl).get();
         
+        System.out.println("[页面解析] URL: " + listUrl + ", 标题: " + doc.title());
+        
         List<String> articleLinks = extractArticleLinks(doc, listUrl);
         System.out.println("[链接提取] 提取到 " + articleLinks.size() + " 个候选链接");
         
@@ -128,6 +130,7 @@ public class CrawlerServiceImpl implements CrawlerService {
             "a[href*='detail'], a[href*='article'], a[href*='view']",
             ".main-content a",
             "article a",
+            "a[href*='zxzc'], a[href*='zcfg'], a[href*='kyzx']",
             "a[href]"
         };
         
@@ -173,7 +176,7 @@ public class CrawlerServiceImpl implements CrawlerService {
             return false;
         }
         
-        if (text.length() < 8 || text.length() > 100) {
+        if (text.length() < 4 || text.length() > 100) {
             return false;
         }
         
@@ -207,7 +210,11 @@ public class CrawlerServiceImpl implements CrawlerService {
             
             if (!containsCurrentOrNextYear(title)) {
                 System.out.println("[过滤] 标题不包含当年或次年年份: " + title);
-                return false;
+                // 对于研招网政策资讯类文章，放宽年份限制
+                if (!articleUrl.contains("chsi.com.cn")) {
+                    return false;
+                }
+                System.out.println("[放宽] 研招网文章跳过年份检查: " + title);
             }
             
             if (existsByTitle(title)) {
@@ -252,6 +259,8 @@ public class CrawlerServiceImpl implements CrawlerService {
             ".article-title",
             ".title",
             ".artitle",
+            ".news-title",
+            ".detail-title",
             "title"
         };
         
@@ -279,7 +288,11 @@ public class CrawlerServiceImpl implements CrawlerService {
             ".cont",
             ".article-body",
             "article",
-            ".main-content"
+            ".main-content",
+            ".content-detail",
+            ".detail-content",
+            ".news-detail",
+            ".text"
         };
         
         for (String selector : contentSelectors) {
@@ -355,7 +368,7 @@ public class CrawlerServiceImpl implements CrawlerService {
         html = html.replaceAll("<br\\s*/?>\\s*<br\\s*/?>", "<br/><br/>");
         html = html.replaceAll("(\\s*<br\\s*/?>\\s*){3,}", "<br/><br/>");
         
-        if (StrUtil.isBlank(html) || html.replaceAll("<[^>]+>", "").trim().length() < 50) {
+        if (StrUtil.isBlank(html) || html.replaceAll("<[^>]+>", "").trim().length() < 20) {
             return "<div class=\"original-link\">" +
                    "<p>请访问研招网或高校研究生院官网查看原文：</p>" +
                    "<p><a href=\"" + pageUrl + "\" target=\"_blank\" rel=\"noopener noreferrer\">" + pageUrl + "</a></p>" +
@@ -387,7 +400,8 @@ public class CrawlerServiceImpl implements CrawlerService {
         }
         
         String text = Jsoup.parse(content).text();
-        if (text.length() < 80) {
+        if (text.length() < 30) {
+            System.out.println("[过滤] 内容太短: " + text.length() + " 字符");
             return false;
         }
         
@@ -456,7 +470,10 @@ public class CrawlerServiceImpl implements CrawlerService {
                 || normalized.contains("view")
                 || normalized.contains("info")
                 || normalized.contains("content")
-                || normalized.contains("show");
+                || normalized.contains("show")
+                || normalized.contains("zxzc")
+                || normalized.contains("zcfg")
+                || normalized.contains("kyzx");
     }
 
     private boolean isOfficialUrl(String url) {
