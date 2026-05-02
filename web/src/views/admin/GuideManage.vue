@@ -129,15 +129,6 @@
               </el-select>
             </el-form-item>
           </el-form>
-          
-          <template #footer>
-            <span class="dialog-footer">
-              <el-button @click="crawlDialogVisible = false">取消</el-button>
-              <el-button type="primary" @click="submitCrawl" :loading="crawling">
-                {{ crawling ? '爬取中...' : '开始爬取' }}
-              </el-button>
-            </span>
-          </template>
         </el-tab-pane>
         
         <el-tab-pane label="定时任务" name="schedule">
@@ -170,6 +161,15 @@
           </el-table>
         </el-tab-pane>
       </el-tabs>
+      
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="crawlDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="submitCrawl" :loading="crawling" v-if="activeCrawlTab === 'manual'">
+            {{ crawling ? '爬取中...' : '开始爬取' }}
+          </el-button>
+        </span>
+      </template>
     </el-dialog>
   </div>
 </template>
