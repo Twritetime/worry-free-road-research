@@ -112,20 +112,12 @@
               <div class="form-tip">示例: https://yz.chsi.com.cn/kyzx/</div>
             </el-form-item>
             
-            <el-form-item label="分类">
-              <el-select v-model="crawlForm.category" style="width: 100%" @change="handleCategoryChange">
-                <el-option label="招生简章" value="zhaoshengjianzhang" />
-                <el-option label="专业目录" value="zhuanyemulu" />
-                <el-option label="考试大纲" value="kaoshidagang" />
-                <el-option label="复试细则" value="fushixize" />
-              </el-select>
-            </el-form-item>
-            
             <el-form-item label="推荐URL">
               <el-select v-model="quickUrl" placeholder="快速选择" @change="handleQuickUrlSelect" style="width: 100%">
-                <el-option label="研招网 - 考研资讯" value="https://yz.chsi.com.cn/kyzx/" />
-                <el-option label="研招网 - 招生简章" value="https://yz.chsi.com.cn/kyzx/zcdh/" />
-                <el-option label="研招网 - 专业目录" value="https://yz.chsi.com.cn/zsml/" />
+                <el-option label="研招网 - 招生简章" value="zhaoshengjianzhang" />
+                <el-option label="研招网 - 专业目录" value="zhuanyemulu" />
+                <el-option label="研招网 - 考试大纲" value="kaoshidagang" />
+                <el-option label="研招网 - 复试细则" value="fushixize" />
               </el-select>
             </el-form-item>
           </el-form>
@@ -205,21 +197,28 @@ const crawlForm = reactive({
     category: 'zhaoshengjianzhang'
   })
   
-  const handleCategoryChange = (val) => {
-        const urlMap = {
-            'zhaoshengjianzhang': 'https://yz.chsi.com.cn/kyzx/',
-            'zhuanyemulu': 'https://yz.chsi.com.cn/zsml/',
-            'kaoshidagang': 'https://yz.chsi.com.cn/kyzx/',
-            'fushixize': 'https://yz.chsi.com.cn/kyzx/'
-        }
-        if (urlMap[val]) {
-            crawlForm.url = urlMap[val]
-        }
-    }
-    
     const handleQuickUrlSelect = (val) => {
-        if (val) {
-            crawlForm.url = val
+        const config = {
+            'zhaoshengjianzhang': {
+                category: 'zhaoshengjianzhang',
+                url: 'https://yz.chsi.com.cn/kyzx/zcdh/'
+            },
+            'zhuanyemulu': {
+                category: 'zhuanyemulu',
+                url: 'https://yz.chsi.com.cn/zsml/'
+            },
+            'kaoshidagang': {
+                category: 'kaoshidagang',
+                url: 'https://yz.chsi.com.cn/kyzx/'
+            },
+            'fushixize': {
+                category: 'fushixize',
+                url: 'https://yz.chsi.com.cn/kyzx/fsgg/'
+            }
+        }
+        if (val && config[val]) {
+            crawlForm.category = config[val].category
+            crawlForm.url = config[val].url
         }
     }
 
