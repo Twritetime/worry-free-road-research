@@ -224,11 +224,11 @@ const isPostAuthor = computed(() => {
 })
 
 const canEditPost = computed(() => {
-    return isPostAuthor.value || isAdmin.value
+    return isAdmin.value
 })
 
 const canDeletePost = computed(() => {
-    return isPostAuthor.value || isAdmin.value
+    return isAdmin.value
 })
 
 const canDeleteComment = (comment) => {
