@@ -119,8 +119,8 @@ const fetchPost = async () => {
         form.content = res.content
         form.category = res.category || 1
         
-        if (user.value.id !== res.userId && !isAdmin.value) {
-            ElMessage.error('无权编辑此贴')
+        if (!isAdmin.value) {
+            ElMessage.error('无权编辑此贴，仅管理员可操作')
             router.push('/forum')
         }
     } catch (error) {
