@@ -220,9 +220,9 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArrowRight, Document, ChatDotRound, Trophy, Edit, Delete, Collection, Reading, Microphone, Folder, ChatLineSquare } from '@element-plus/icons-vue'
 import { getNewsList, createNews, updateNews, deleteNews } from '@/api/news'
-import { getMaterialListAll } from '@/api/material'
-import { getGuideListAll } from '@/api/guide'
-import { getPostListAll } from '@/api/post'
+import { getMaterialList } from '@/api/material'
+import { getGuideList } from '@/api/guide'
+import { getPostList } from '@/api/post'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import { storeToRefs } from 'pinia'
@@ -277,7 +277,7 @@ const fetchNews = async () => {
 
 const fetchMaterials = async () => {
     try {
-        const res = await getMaterialListAll({ pageNum: 1, pageSize: 4 })
+        const res = await getMaterialList({ pageNum: 1, pageSize: 4 })
         materialList.value = res.records || []
     } catch (error) {
         console.error(error)
@@ -286,7 +286,7 @@ const fetchMaterials = async () => {
 
 const fetchGuides = async () => {
     try {
-        const res = await getGuideListAll({ pageNum: 1, pageSize: 4 })
+        const res = await getGuideList({ pageNum: 1, pageSize: 4 })
         guideList.value = res.records || []
     } catch (error) {
         console.error(error)
@@ -295,7 +295,7 @@ const fetchGuides = async () => {
 
 const fetchPosts = async () => {
     try {
-        const res = await getPostListAll({ pageNum: 1, pageSize: 5 })
+        const res = await getPostList({ pageNum: 1, pageSize: 5 })
         postList.value = res.records || []
     } catch (error) {
         console.error(error)
