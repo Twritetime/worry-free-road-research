@@ -4,13 +4,14 @@
       <h2>资料管理</h2>
       <div class="filters">
         <el-select v-model="filterCategory" placeholder="分类筛选" clearable style="width: 120px; margin-right: 10px" @change="handleSearch">
-            <el-option label="公共课" value="公共课" />
-            <el-option label="专业课" value="专业课" />
-            <el-option label="复试资料" value="复试资料" />
+            <el-option label="公共课" value="public" />
+            <el-option label="专业课" value="major" />
+            <el-option label="复试资料" value="interview" />
         </el-select>
         <el-input v-model="keyword" placeholder="搜索资料名称" style="width: 200px; margin-right: 10px" clearable @clear="handleSearch" />
         <el-button type="primary" @click="handleSearch">搜索</el-button>
         <el-button type="success" @click="handleAdd">发布资料</el-button>
+        <el-button type="warning" @click="handleAutoClassify">智能分类</el-button>
       </div>
     </div>
 
@@ -29,7 +30,11 @@
           </template>
         </el-table-column>
         <el-table-column prop="name" label="资料名称" show-overflow-tooltip />
-        <el-table-column prop="category" label="分类" width="120" />
+        <el-table-column prop="category" label="分类" width="120">
+          <template #default="{ row }">
+            {{ getCategoryLabel(row.category) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="fileFormat" label="格式" width="100" />
         <el-table-column prop="fileSize" label="大小" width="100" />
         <el-table-column prop="price" label="价格" width="100">
@@ -92,9 +97,9 @@
           <el-col :span="12">
             <el-form-item label="分类" prop="category">
               <el-select v-model="form.category" placeholder="请选择分类" style="width: 100%">
-                <el-option label="公共课" value="公共课" />
-                <el-option label="专业课" value="专业课" />
-                <el-option label="复试资料" value="复试资料" />
+                <el-option label="公共课" value="public" />
+                <el-option label="专业课" value="major" />
+                <el-option label="复试资料" value="interview" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -218,12 +223,12 @@
         
         <el-form-item label="资料文件" prop="fileUrl">
           <el-upload
+            ref="fileUploadRef"
             class="file-uploader"
             action="#"
             drag
             :http-request="uploadFileRequest"
             :show-file-list="true"
-            :file-list="fileList"
             :on-success="handleFileSuccess"
             :on-error="handleFileError"
             :before-upload="beforeFileUpload"
@@ -240,7 +245,7 @@
           <div v-if="form.fileUrl" class="file-link-preview">
             <el-icon><Document /></el-icon>
             <span>已上传: {{ form.fileUrl }}</span>
-            <el-button type="danger" link size="small" @click="form.fileUrl = ''; fileList = []">删除</el-button>
+            <el-button type="danger" link size="small" @click="clearFileUpload">删除</el-button>
           </div>
         </el-form-item>
       </el-form>
@@ -299,7 +304,15 @@ const form = reactive({
   fileFormat: ''
 })
 
-const fileList = ref([])
+const fileUploadRef = ref(null)
+
+const clearFileUpload = () => {
+  form.fileUrl = ''
+  fileUploadProcessed.value = false
+  if (fileUploadRef.value) {
+    fileUploadRef.value.clearFiles()
+  }
+}
 
 const rules = {
   name: [{ required: true, message: '请输入资料名称', trigger: 'blur' }],
@@ -331,6 +344,93 @@ const handleSearch = () => {
 const handlePageChange = (val) => {
   pageNum.value = val
   fetchData()
+}
+
+const handleAutoClassify = async () => {
+  try {
+    await ElMessageBox.confirm(
+      '此操作将对所有资料根据名称和描述进行智能分类，确定要继续吗？',
+      '智能分类',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+  } catch {
+    return
+  }
+
+  loading.value = true
+  try {
+    const res = await getMaterialListAll({ pageNum: 1, pageSize: 1000 })
+    const materials = res.records || res
+    let updatedCount = 0
+
+    for (const material of materials) {
+      const newCategory = analyzeCategory(material.name, material.description, material.tags)
+      if (newCategory && newCategory !== material.category) {
+        try {
+          await updateMaterial({
+            id: material.id,
+            name: material.name,
+            description: material.description,
+            price: material.price,
+            originalPrice: material.originalPrice,
+            stock: material.stock,
+            category: newCategory,
+            coverImg: material.coverImg,
+            fileUrl: material.fileUrl,
+            specs: material.specs,
+            sales: material.sales || 0,
+            fileSize: material.fileSize,
+            downloadCount: material.downloadCount || 0,
+            tags: material.tags,
+            applyYear: material.applyYear,
+            author: material.author,
+            rating: material.rating || 0,
+            previewContent: material.previewContent,
+            fileFormat: material.fileFormat,
+            flashStartTime: material.flashStartTime,
+            flashEndTime: material.flashEndTime,
+            status: material.status,
+            sortOrder: material.sortOrder
+          })
+          updatedCount++
+        } catch (e) {
+          console.error(`更新资料 ${material.id} 分类失败:`, e)
+        }
+      }
+    }
+
+    ElMessage.success(`智能分类完成！共更新了 ${updatedCount} 条资料`)
+    fetchData()
+  } catch (error) {
+    ElMessage.error('智能分类失败: ' + (error.message || '未知错误'))
+  } finally {
+    loading.value = false
+  }
+}
+
+const analyzeCategory = (name, description, tags) => {
+  const text = `${name || ''} ${description || ''} ${tags || ''}`.toLowerCase()
+
+  const interviewKeywords = ['复试', '面试', '口语', '调剂', '导师', '研究生面试', '英语口语', '口试', '面试技巧']
+  for (const kw of interviewKeywords) {
+    if (text.includes(kw)) return 'interview'
+  }
+
+  const publicKeywords = ['政治', '英语', '数学', '公共课', '考研政治', '考研英语', '考研数学', '大学英语', '线代', '高数', '概率论']
+  for (const kw of publicKeywords) {
+    if (text.includes(kw)) return 'public'
+  }
+
+  const majorKeywords = ['计算机', '数据结构', '408', '操作系统', '网络', '组成原理', '数据库', '算法', '软件工程', '专业课', '编程', '程序设计', '离散数学', '计算机组成']
+  for (const kw of majorKeywords) {
+    if (text.includes(kw)) return 'major'
+  }
+
+  return null
 }
 
 const handleStatusChange = async (row) => {
@@ -381,18 +481,26 @@ const handleAdd = () => {
   })
   isUploading.value = false
   coverUploadProcessed.value = false
+  fileUploadProcessed.value = false
   dialogVisible.value = true
 }
 
 const handleEdit = (row) => {
   dialogTitle.value = '编辑资料'
+  const categoryMap = {
+    '公共课': 'public',
+    '专业课': 'major',
+    '复试资料': 'interview'
+  }
   Object.assign(form, {
     ...row,
+    category: categoryMap[row.category] || row.category,
     flashStartTime: normalizeDateTime(row.flashStartTime),
     flashEndTime: normalizeDateTime(row.flashEndTime)
   })
   isUploading.value = false
   coverUploadProcessed.value = false
+  fileUploadProcessed.value = false
   dialogVisible.value = true
 }
 
@@ -480,6 +588,8 @@ const normalizeCoverImg = (coverImg) => {
   return ''
 }
 
+const fileUploadProcessed = ref(false)
+
 const uploadFileRequest = async (options) => {
   const formData = new FormData()
   formData.append('file', options.file)
@@ -492,19 +602,35 @@ const uploadFileRequest = async (options) => {
 }
 
 const handleFileSuccess = (res) => {
-  if (typeof res === 'string') {
-    form.fileUrl = res
-    return
+  if (fileUploadProcessed.value) return
+  fileUploadProcessed.value = true
+  
+  let url = extractUrlFromResponse(res)
+  if (url) {
+    form.fileUrl = url
   }
-  if (res && typeof res.data === 'string') {
-    form.fileUrl = res.data
-    return
+  ElMessage.success('资料文件上传成功')
+}
+
+const extractUrlFromResponse = (res) => {
+  if (!res) return null
+  
+  if (typeof res === 'string') return res
+  
+  if (typeof res !== 'object' || Array.isArray(res)) return null
+  
+  const possibleKeys = ['url', 'data', 'fileUrl', 'filePath', 'path', 'location', 'fileName']
+  for (const key of possibleKeys) {
+    const value = res[key]
+    if (typeof value === 'string' && value && (value.startsWith('http') || value.startsWith('/') || value.includes('.'))) {
+      return value
+    }
   }
-  if (res && typeof res.url === 'string') {
-    form.fileUrl = res.url
-    return
-  }
-  ElMessage.error('资料文件上传失败')
+  
+  const firstStringValue = Object.values(res).find(v => typeof v === 'string' && v.length > 10)
+  if (firstStringValue) return firstStringValue
+  
+  return null
 }
 
 const handleFileError = () => {
@@ -545,6 +671,18 @@ const beforeFileUpload = (file) => {
   }
   
   return isAllowed && isLt50M
+}
+
+const getCategoryLabel = (val) => {
+  const map = {
+    'public': '公共课',
+    'major': '专业课',
+    'interview': '复试资料',
+    '公共课': '公共课',
+    '专业课': '专业课',
+    '复试资料': '复试资料'
+  }
+  return map[val] || val || '未分类'
 }
 
 const getFileFormat = (extension) => {

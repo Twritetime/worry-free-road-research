@@ -14,7 +14,6 @@
         <el-input v-model="keyword" placeholder="搜索指南标题" style="width: 200px; margin-right: 10px" clearable @clear="handleSearch" />
         <el-button type="primary" @click="handleSearch">搜索</el-button>
         <el-button type="success" @click="handleAdd">发布指南</el-button>
-        <el-button type="warning" @click="handleCrawl">一键爬取</el-button>
       </div>
     </div>
 
@@ -90,86 +89,16 @@
         :target-id="currentGuideId"
         :target-type="2"
     />
-
-    <el-dialog title="爬取数据" v-model="crawlDialogVisible" width="600px">
-      <el-tabs v-model="activeCrawlTab" class="crawl-tabs">
-        <el-tab-pane label="手动爬取" name="manual">
-          <el-alert 
-            title="爬取说明" 
-            type="info" 
-            :closable="false" 
-            style="margin-bottom: 20px"
-          >
-            <p>1. 仅支持研招网及高校官网（chsi.cn/chsi.com.cn/edu.cn/gov.cn）</p>
-            <p>2. 系统会自动过滤当年和次年的最新数据</p>
-            <p>3. 重复的标题会自动跳过</p>
-            <p>4. 爬取过程可能需要几分钟，请耐心等待</p>
-          </el-alert>
-          
-          <el-form :model="crawlForm" label-width="100px">
-            <el-form-item label="目标URL">
-              <el-input v-model="crawlForm.url" placeholder="请输入列表页URL" />
-              <div class="form-tip">示例: https://yz.chsi.com.cn/kyzx/</div>
-            </el-form-item>
-            
-            <el-form-item label="推荐URL">
-              <el-select v-model="quickUrl" placeholder="快速选择" @change="handleQuickUrlSelect" style="width: 100%">
-                <el-option label="研招网 - 招生简章" value="zhaoshengjianzhang" />
-                <el-option label="研招网 - 专业目录" value="zhuanyemulu" />
-                <el-option label="研招网 - 考试大纲" value="kaoshidagang" />
-                <el-option label="研招网 - 复试细则" value="fushixize" />
-              </el-select>
-            </el-form-item>
-          </el-form>
-        </el-tab-pane>
-        
-        <el-tab-pane label="定时任务" name="schedule">
-          <el-alert 
-            title="定时任务说明" 
-            type="success" 
-            :closable="false" 
-            style="margin-bottom: 20px"
-          >
-            <p>系统已配置自动定时爬取任务，无需人工干预</p>
-            <p>您也可以手动触发定时任务立即执行</p>
-          </el-alert>
-          
-          <el-table :data="scheduleTasks" style="width: 100%" v-loading="scheduleLoading">
-            <el-table-column prop="name" label="任务名称" width="120" />
-            <el-table-column prop="description" label="执行时间" width="120" />
-            <el-table-column prop="url" label="目标URL" show-overflow-tooltip />
-            <el-table-column label="操作" width="120" fixed="right">
-              <template #default="{ row }">
-                <el-button 
-                  type="primary" 
-                  size="small" 
-                  @click="handleRunSchedule(row.key)"
-                  :loading="runningTask === row.key"
-                >
-                  立即执行
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-        </el-tab-pane>
-      </el-tabs>
-      
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="crawlDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="submitCrawl" :loading="crawling" v-if="activeCrawlTab === 'manual'">
-            {{ crawling ? '爬取中...' : '开始爬取' }}
-          </el-button>
-        </span>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getGuideListAll, createGuide, updateGuide, deleteGuide, updateGuideStatus, crawlGuides, swapGuideOrder, getScheduleConfig, runScheduleTask } from '@/api/guide'
+import { 
+  getGuideListAll, createGuide, updateGuide, deleteGuide, updateGuideStatus,
+  swapGuideOrder
+} from '@/api/guide'
 import AdminCommentDialog from '@/components/AdminCommentDialog.vue'
 
 const loading = ref(false)
@@ -184,43 +113,6 @@ const filterMajor = ref('')
 
 const commentDialogVisible = ref(false)
 const currentGuideId = ref(null)
-
-const crawlDialogVisible = ref(false)
-const crawling = ref(false)
-const quickUrl = ref('')
-const activeCrawlTab = ref('manual')
-const scheduleTasks = ref([])
-const scheduleLoading = ref(false)
-const runningTask = ref('')
-const crawlForm = reactive({
-    url: 'https://yz.chsi.com.cn/kyzx/',
-    category: 'zhaoshengjianzhang'
-  })
-  
-    const handleQuickUrlSelect = (val) => {
-        const config = {
-            'zhaoshengjianzhang': {
-                category: 'zhaoshengjianzhang',
-                url: 'https://yz.chsi.com.cn/kyzx/zcdh/'
-            },
-            'zhuanyemulu': {
-                category: 'zhuanyemulu',
-                url: 'https://yz.chsi.com.cn/zsml/'
-            },
-            'kaoshidagang': {
-                category: 'kaoshidagang',
-                url: 'https://yz.chsi.com.cn/kyzx/'
-            },
-            'fushixize': {
-                category: 'fushixize',
-                url: 'https://yz.chsi.com.cn/kyzx/fsgg/'
-            }
-        }
-        if (val && config[val]) {
-            crawlForm.category = config[val].category
-            crawlForm.url = config[val].url
-        }
-    }
 
 const dialogVisible = ref(false)
 const dialogTitle = ref('发布指南')
@@ -279,9 +171,7 @@ const handleStatusChange = async (row) => {
 
 const handleMove = async (index, offset) => {
   const targetIndex = index + offset
-  if (targetIndex < 0 || targetIndex >= guideList.value.length) {
-    return
-  }
+  if (targetIndex < 0 || targetIndex >= guideList.value.length) return
   const current = guideList.value[index]
   const target = guideList.value[targetIndex]
   await swapGuideOrder(current.id, target.id)
@@ -290,70 +180,8 @@ const handleMove = async (index, offset) => {
 }
 
 const handleComments = (row) => {
-    currentGuideId.value = row.id
-    commentDialogVisible.value = true
-}
-
-const handleCrawl = () => {
-    crawlDialogVisible.value = true
-    activeCrawlTab.value = 'manual'
-    fetchScheduleConfig()
-}
-
-const fetchScheduleConfig = async () => {
-    scheduleLoading.value = true
-    try {
-        const res = await getScheduleConfig()
-        scheduleTasks.value = Object.entries(res).map(([key, value]) => ({
-            key,
-            ...value
-        }))
-    } catch (error) {
-        console.error('获取定时任务配置失败:', error)
-    } finally {
-        scheduleLoading.value = false
-    }
-}
-
-const handleRunSchedule = async (category) => {
-    runningTask.value = category
-    try {
-        const res = await runScheduleTask(category)
-        const successMessage = typeof res === 'string' ? res : (res?.message || '任务执行成功')
-        ElMessage.success(successMessage)
-        fetchData()
-    } catch (error) {
-        ElMessage.error('任务执行失败: ' + (error.message || '未知错误'))
-    } finally {
-        runningTask.value = ''
-    }
-}
-
-const submitCrawl = async () => {
-    if (!crawlForm.url) {
-        ElMessage.warning('请输入URL')
-        return
-    }
-    
-    if (!crawlForm.url.startsWith('http://') && !crawlForm.url.startsWith('https://')) {
-        ElMessage.warning('URL必须以http://或https://开头')
-        return
-    }
-    
-    crawling.value = true
-    try {
-        const res = await crawlGuides(crawlForm.url, crawlForm.category)
-        const successMessage = typeof res === 'string' ? res : (res?.message || '爬取任务完成')
-        ElMessage.success(successMessage)
-        crawlDialogVisible.value = false
-        quickUrl.value = ''
-        fetchData()
-    } catch (error) {
-        ElMessage.error('爬取失败: ' + (error.message || '未知错误'))
-        console.error(error)
-    } finally {
-        crawling.value = false
-    }
+  currentGuideId.value = row.id
+  commentDialogVisible.value = true
 }
 
 const handleAdd = () => {
@@ -422,11 +250,5 @@ onMounted(() => {
   font-size: 12px;
   color: #909399;
   margin-top: 5px;
-}
-.crawl-tabs {
-  margin-top: 10px;
-}
-.crawl-tabs :deep(.el-tabs__content) {
-  padding-top: 20px;
 }
 </style>

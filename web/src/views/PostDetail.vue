@@ -169,7 +169,7 @@ import dayjs from 'dayjs'
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
-const { user: currentUser, isAdmin } = storeToRefs(userStore)
+const { user: currentUser, isFrontAdmin } = storeToRefs(userStore)
 
 const post = ref({})
 const loading = ref(false)
@@ -224,16 +224,16 @@ const isPostAuthor = computed(() => {
 })
 
 const canEditPost = computed(() => {
-    return isAdmin.value
+    return isFrontAdmin.value
 })
 
 const canDeletePost = computed(() => {
-    return isAdmin.value
+    return isFrontAdmin.value
 })
 
 const canDeleteComment = (comment) => {
     if (!currentUser.value.id) return false
-    return isAdmin.value || comment.userId === currentUser.value.id
+    return isFrontAdmin.value || comment.userId === currentUser.value.id
 }
 
 const fetchPostDetail = async (id) => {

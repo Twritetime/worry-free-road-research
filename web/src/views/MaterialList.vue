@@ -284,11 +284,11 @@
         
         <el-form-item label="资料文件" prop="fileUrl">
             <el-upload
+                ref="fileUploadRef"
                 class="file-uploader"
                 :action="uploadUrl"
                 :limit="1"
                 :on-success="handleFileSuccess"
-                :file-list="fileList"
             >
                 <el-button type="primary" plain :icon="Upload">点击上传资料</el-button>
                 <template #tip>
@@ -376,7 +376,7 @@ const materialForm = reactive({
     flashEndTime: '',
     status: 1
 })
-const fileList = ref([])
+const fileUploadRef = ref(null)
 
 const rules = {
     name: [{ required: true, message: '请输入资料名称', trigger: 'blur' }],
@@ -657,7 +657,6 @@ const openDialog = (item = null) => {
             flashStartTime: normalizeDateTimeString(item.flashStartTime),
             flashEndTime: normalizeDateTimeString(item.flashEndTime)
         })
-        fileList.value = item.fileUrl ? [{ name: '资料文件', url: item.fileUrl }] : []
     } else {
         isEdit.value = false
         Object.assign(materialForm, {
@@ -675,20 +674,21 @@ const openDialog = (item = null) => {
             flashEndTime: '',
             status: 1
         })
-        fileList.value = []
     }
     dialogVisible.value = true
 }
 
 const handleCoverSuccess = (res) => {
-    materialForm.coverImg = res.data
+    const url = typeof res === 'string' ? res : (res?.data || '')
+    materialForm.coverImg = url
 }
 
-const handleFileSuccess = (res) => {
-    materialForm.fileUrl = res.data
-    const fileName = fileList.value[0]?.name || ''
+const handleFileSuccess = (res, file) => {
+    const url = typeof res === 'string' ? res : (res?.data || '')
+    materialForm.fileUrl = url
+    const fileName = file?.name || ''
     const extension = fileName.split('.').pop().toLowerCase()
-    materialForm.fileSize = (fileList.value[0]?.size / 1024 / 1024).toFixed(2) + 'MB'
+    materialForm.fileSize = file?.size ? (file.size / 1024 / 1024).toFixed(2) + 'MB' : ''
     materialForm.fileFormat = getFileFormat(extension)
 }
 

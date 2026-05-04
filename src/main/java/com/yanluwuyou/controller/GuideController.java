@@ -14,69 +14,26 @@ import org.jsoup.nodes.Element;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.time.LocalDate;
 import java.util.List;
-import java.net.URI;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-/**
- * 报考指南控制器
- */
 @RestController
 @RequestMapping("/guide")
 public class GuideController {
 
     private static final Pattern YEAR_PATTERN = Pattern.compile("20\\d{2}");
     private static final Set<String> OFFICIAL_HOST_SUFFIXES = Set.of(
-            "chsi.com.cn",
-            "chsi.cn",
-            "edu.cn",
-            "gov.cn"
+            "chsi.com.cn", "chsi.cn", "edu.cn", "gov.cn"
     );
 
     @Autowired
     private GuideService guideService;
 
-    @Autowired
-    private com.yanluwuyou.service.CrawlerService crawlerService;
-
-    @Autowired
-    private com.yanluwuyou.service.impl.CrawlerSchedulerService crawlerSchedulerService;
-
-    /**
-     * 爬取指南数据
-     */
-    @PostMapping("/crawl")
-    @RequireRoles({User.ROLE_ADMIN, User.ROLE_OPERATOR})
-    public Result<?> crawl(@RequestParam String url, @RequestParam String category) {
-        try {
-            String normalizedUrl = normalizeCrawlUrl(url, category);
-            System.out.println("[爬取请求] URL: " + normalizedUrl + ", 分类: " + category);
-            
-            int count = crawlerService.crawlGuides(normalizedUrl, category);
-            
-            if (count >= 0) {
-                int removedCount = removeOutdatedGuides(category);
-                String message = String.format("成功爬取 %d 条最新数据，清理旧数据 %d 条", count, removedCount);
-                System.out.println("[爬取完成] " + message);
-                return Result.success(message);
-            }
-            return Result.error("爬取失败，请检查URL或网络");
-        } catch (IllegalArgumentException e) {
-            return Result.error(e.getMessage());
-        } catch (Exception e) {
-            System.err.println("[爬取异常] " + e.getMessage());
-            e.printStackTrace();
-            return Result.error("爬取过程中发生错误: " + e.getMessage());
-        }
-    }
-
-    /**
-     * 获取指南列表
-     */
     @GetMapping("/list")
     public Result<Page<Guide>> list(@RequestParam(defaultValue = "1") Integer pageNum,
                                     @RequestParam(defaultValue = "10") Integer pageSize,
@@ -93,7 +50,7 @@ public class GuideController {
         queryWrapper.like(StrUtil.isNotBlank(institution), Guide::getInstitution, institution);
         queryWrapper.like(StrUtil.isNotBlank(major), Guide::getMajor, major);
         queryWrapper.notLike(Guide::getTitle, "{{");
-        queryWrapper.eq(Guide::getStatus, 1); // 仅显示已发布的指南
+        queryWrapper.eq(Guide::getStatus, 1);
 
         if ("viewCount".equals(sortBy)) {
             if ("asc".equalsIgnoreCase(sortOrder)) {
@@ -112,9 +69,6 @@ public class GuideController {
         return Result.success(guideService.page(page, queryWrapper));
     }
 
-    /**
-     * 获取所有指南列表 (管理端)
-     */
     @GetMapping("/list-all")
     @RequireRoles({User.ROLE_ADMIN, User.ROLE_OPERATOR})
     public Result<Page<Guide>> listAll(@RequestParam(defaultValue = "1") Integer pageNum,
@@ -139,9 +93,6 @@ public class GuideController {
         return Result.success(guideService.page(page, queryWrapper));
     }
 
-    /**
-     * 更新指南状态
-     */
     @PutMapping("/{id}/status/{status}")
     @RequireRoles({User.ROLE_ADMIN, User.ROLE_OPERATOR})
     public Result<?> updateStatus(@PathVariable Long id, @PathVariable Integer status) {
@@ -154,9 +105,6 @@ public class GuideController {
         return Result.success();
     }
 
-    /**
-     * 根据ID获取指南详情
-     */
     @GetMapping("/{id}")
     public Result<Guide> getById(@PathVariable Long id) {
         Guide guide = guideService.getById(id);
@@ -174,25 +122,16 @@ public class GuideController {
         return Result.success(guide);
     }
 
-    /**
-     * 获取所有院校列表
-     */
     @GetMapping("/institutions")
     public Result<List<String>> getInstitutions() {
         return Result.success(guideService.getDistinctInstitutions());
     }
 
-    /**
-     * 获取所有专业列表
-     */
     @GetMapping("/majors")
     public Result<List<String>> getMajors() {
         return Result.success(guideService.getDistinctMajors());
     }
 
-    /**
-     * 新增指南
-     */
     @PostMapping
     @RequireRoles({User.ROLE_ADMIN, User.ROLE_OPERATOR})
     public Result<?> save(@RequestBody Guide guide) {
@@ -203,9 +142,6 @@ public class GuideController {
         return Result.success();
     }
 
-    /**
-     * 更新指南
-     */
     @PutMapping
     @RequireRoles({User.ROLE_ADMIN, User.ROLE_OPERATOR})
     public Result<?> update(@RequestBody Guide guide) {
@@ -239,9 +175,6 @@ public class GuideController {
         return Result.success();
     }
 
-    /**
-     * 删除指南
-     */
     @DeleteMapping("/{id}")
     @RequireRoles({User.ROLE_ADMIN, User.ROLE_OPERATOR})
     public Result<?> delete(@PathVariable Long id) {
@@ -263,9 +196,7 @@ public class GuideController {
     }
 
     private void ensureSortOrder(Guide guide) {
-        if (guide.getSortOrder() != null && guide.getSortOrder() != 0) {
-            return;
-        }
+        if (guide.getSortOrder() != null && guide.getSortOrder() != 0) return;
         Guide existing = guideService.getById(guide.getId());
         if (existing != null && existing.getSortOrder() != null && existing.getSortOrder() != 0) {
             guide.setSortOrder(existing.getSortOrder());
@@ -275,24 +206,16 @@ public class GuideController {
     }
 
     private String sanitizeContent(String content) {
-        if (StrUtil.isBlank(content)) {
-            return "";
-        }
+        if (StrUtil.isBlank(content)) return "";
         Document document = Jsoup.parseBodyFragment(content);
         for (Element anchor : document.select("a")) {
             String href = anchor.attr("abs:href");
-            if (!isOfficialUrl(href)) {
-                anchor.remove();
-                continue;
-            }
+            if (!isOfficialUrl(href)) { anchor.remove(); continue; }
             anchor.attr("href", href);
         }
         for (Element img : document.select("img")) {
             String src = img.attr("abs:src");
-            if (!isOfficialUrl(src)) {
-                img.remove();
-                continue;
-            }
+            if (!isOfficialUrl(src)) { img.remove(); continue; }
             img.attr("src", src);
         }
         return document.body().html();
@@ -302,19 +225,13 @@ public class GuideController {
         try {
             URI uri = URI.create(url);
             String host = uri.getHost();
-            if (StrUtil.isBlank(host)) {
-                return false;
-            }
+            if (StrUtil.isBlank(host)) return false;
             String normalized = host.toLowerCase();
             for (String suffix : OFFICIAL_HOST_SUFFIXES) {
-                if (normalized.equals(suffix) || normalized.endsWith("." + suffix)) {
-                    return true;
-                }
+                if (normalized.equals(suffix) || normalized.endsWith("." + suffix)) return true;
             }
             return false;
-        } catch (Exception ignored) {
-            return false;
-        }
+        } catch (Exception ignored) { return false; }
     }
 
     private boolean containsTemplateToken(String value) {
@@ -323,15 +240,12 @@ public class GuideController {
 
     private int removeOutdatedGuides(String category) {
         List<Guide> categoryGuides = guideService.lambdaQuery()
-                .eq(Guide::getCategory, category)
-                .list();
-        if (categoryGuides.isEmpty()) {
-            return 0;
-        }
-        
+                .eq(Guide::getCategory, category).list();
+        if (categoryGuides.isEmpty()) return 0;
+
         int currentYear = LocalDate.now().getYear();
         int minAllowedYear = currentYear - 1;
-        
+
         List<Long> staleIds = categoryGuides.stream()
                 .filter(guide -> {
                     int year = extractNewestYear(guide.getTitle());
@@ -339,113 +253,21 @@ public class GuideController {
                 })
                 .map(Guide::getId)
                 .collect(Collectors.toList());
-                
-        if (staleIds.isEmpty()) {
-            return 0;
-        }
-        
+
+        if (staleIds.isEmpty()) return 0;
         guideService.removeBatchByIds(staleIds);
         return staleIds.size();
     }
 
     private int extractNewestYear(String text) {
-        if (StrUtil.isBlank(text)) {
-            return 0;
-        }
+        if (StrUtil.isBlank(text)) return 0;
         int latestYear = 0;
         Matcher matcher = YEAR_PATTERN.matcher(text);
         while (matcher.find()) {
             int year = Integer.parseInt(matcher.group());
-            if (year >= 2020 && year <= 2099 && year > latestYear) {
-                latestYear = year;
-            }
+            if (year >= 2020 && year <= 2099 && year > latestYear) latestYear = year;
         }
         return latestYear;
     }
 
-    private String normalizeCrawlUrl(String rawUrl, String category) {
-        String normalized = StrUtil.trim(rawUrl)
-                .replace("`", "")
-                .replace("[", "")
-                .replace("]", "")
-                .replace("\"", "")
-                .replace("'", "");
-        if (StrUtil.isBlank(normalized)) {
-            return "https://yz.chsi.com.cn/kyzx/";
-        }
-        if (!normalized.startsWith("http://") && !normalized.startsWith("https://")) {
-            normalized = "https://" + normalized;
-        }
-        if ("fushixize".equals(category) && normalized.contains("yz.chsi.com.cn/kyzx/fsgg/")) {
-            return "https://yz.chsi.com.cn/kyzx/";
-        }
-        return normalized;
-    }
-
-    /**
-     * 执行定时爬取任务
-     */
-    @PostMapping("/schedule/run")
-    @RequireRoles({User.ROLE_ADMIN, User.ROLE_OPERATOR})
-    public Result<?> runScheduleTask(@RequestParam String category) {
-        try {
-            String url = getDefaultUrl(category);
-            System.out.println("[手动触发定时任务] 分类: " + category + ", URL: " + url);
-            
-            int count = crawlerService.crawlGuides(url, category);
-            
-            if (count >= 0) {
-                String message = String.format("定时任务执行成功，爬取 %d 条数据", count);
-                return Result.success(message);
-            }
-            return Result.error("定时任务执行失败");
-        } catch (Exception e) {
-            System.err.println("[定时任务异常] " + e.getMessage());
-            return Result.error("定时任务执行异常: " + e.getMessage());
-        }
-    }
-
-    /**
-     * 获取定时任务配置信息
-     */
-    @GetMapping("/schedule/config")
-    @RequireRoles({User.ROLE_ADMIN, User.ROLE_OPERATOR})
-    public Result<?> getScheduleConfig() {
-        java.util.Map<String, Object> config = new java.util.HashMap<>();
-        config.put("zhaoshengjianzhang", java.util.Map.of(
-                "name", "招生简章",
-                "url", "https://yz.chsi.com.cn/kyzx/",
-                "cron", "0 0 8 * * ?",
-                "description", "每天8:00执行"
-        ));
-        config.put("zhuanyemulu", java.util.Map.of(
-                "name", "专业目录",
-                "url", "https://yz.chsi.com.cn/zsml/",
-                "cron", "0 0 9 * * ?",
-                "description", "每天9:00执行"
-        ));
-        config.put("kaoshidagang", java.util.Map.of(
-                "name", "考试大纲",
-                "url", "https://yz.chsi.com.cn/kyzx/",
-                "cron", "0 0 10 * * ?",
-                "description", "每天10:00执行"
-        ));
-        config.put("fushixize", java.util.Map.of(
-                "name", "复试细则",
-                "url", "https://yz.chsi.com.cn/kyzx/",
-                "cron", "0 0 11 * * ?",
-                "description", "每天11:00执行"
-        ));
-        return Result.success(config);
-    }
-
-    private String getDefaultUrl(String category) {
-        return switch (category) {
-            case "zhaoshengjianzhang" -> "https://yz.chsi.com.cn/kyzx/";
-            case "zhuanyemulu" -> "https://yz.chsi.com.cn/zsml/";
-            case "kaoshidagang" -> "https://yz.chsi.com.cn/kyzx/";
-            case "fushixize" -> "https://yz.chsi.com.cn/kyzx/";
-            default -> "https://yz.chsi.com.cn/kyzx/";
-        };
-    }
 }

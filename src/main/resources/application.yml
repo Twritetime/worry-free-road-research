@@ -43,22 +43,6 @@ alipay:
   charset: UTF-8
   signType: RSA2
 
-crawler:
-  schedule:
-    enabled: true
-    zhaoshengjianzhang:
-      cron: "0 0 8 * * ?"
-      url: "https://yz.chsi.com.cn/kyzx/"
-    zhuanyemulu:
-      cron: "0 0 9 * * ?"
-      url: "https://yz.chsi.com.cn/zsml/"
-    kaoshidagang:
-      cron: "0 0 10 * * ?"
-      url: "https://yz.chsi.com.cn/kyzx/"
-    fushixize:
-      cron: "0 0 11 * * ?"
-      url: "https://yz.chsi.com.cn/kyzx/"
-
 ai:
   deepseek:
     enabled: true
