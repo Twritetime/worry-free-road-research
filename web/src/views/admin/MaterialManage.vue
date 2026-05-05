@@ -86,55 +86,26 @@
     </el-card>
 
     <!-- 编辑/新增对话框 -->
-    <el-dialog :title="dialogTitle" v-model="dialogVisible" width="700px">
-      <el-form :model="form" label-width="100px" :rules="rules" ref="formRef">
-        <el-row :gutter="20">
+    <el-dialog :title="dialogTitle" v-model="dialogVisible" width="1000px" class="material-edit-dialog">
+      <el-form :model="form" label-width="80px" :rules="rules" ref="formRef" class="compact-form">
+        <el-row :gutter="16">
           <el-col :span="12">
             <el-form-item label="名称" prop="name">
               <el-input v-model="form.name" placeholder="请输入资料名称" />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :span="6">
             <el-form-item label="分类" prop="category">
-              <el-select v-model="form.category" placeholder="请选择分类" style="width: 100%">
+              <el-select v-model="form.category" placeholder="选择分类" style="width: 100%">
                 <el-option label="公共课" value="public" />
                 <el-option label="专业课" value="major" />
                 <el-option label="复试资料" value="interview" />
               </el-select>
             </el-form-item>
           </el-col>
-        </el-row>
-        
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="价格" prop="price">
-              <el-input-number v-model="form.price" :precision="2" :step="1" :min="0" style="width: 100%" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="划线价" prop="originalPrice">
-              <el-input-number v-model="form.originalPrice" :precision="2" :step="1" :min="0" style="width: 100%" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-        
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="库存" prop="stock">
-              <el-input-number v-model="form.stock" :step="1" :min="0" style="width: 100%" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="销量" prop="sales">
-              <el-input-number v-model="form.sales" :step="1" :min="0" style="width: 100%" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-        
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="资料格式" prop="fileFormat">
-              <el-select v-model="form.fileFormat" placeholder="请选择格式" style="width: 100%">
+          <el-col :span="6">
+            <el-form-item label="格式" prop="fileFormat">
+              <el-select v-model="form.fileFormat" placeholder="格式" style="width: 100%">
                 <el-option label="PDF" value="PDF" />
                 <el-option label="视频" value="视频" />
                 <el-option label="音频" value="音频" />
@@ -144,84 +115,119 @@
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col :span="12">
-            <el-form-item label="文件大小" prop="fileSize">
-              <el-input v-model="form.fileSize" placeholder="如: 15.2MB" />
+        </el-row>
+
+        <el-row :gutter="16">
+          <el-col :span="6">
+            <el-form-item label="价格" prop="price">
+              <el-input-number v-model="form.price" :precision="2" :step="1" :min="0" style="width: 100%" size="small" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="6">
+            <el-form-item label="划线价" prop="originalPrice">
+              <el-input-number v-model="form.originalPrice" :precision="2" :step="1" :min="0" style="width: 100%" size="small" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="6">
+            <el-form-item label="库存" prop="stock">
+              <el-input-number v-model="form.stock" :step="1" :min="0" style="width: 100%" size="small" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="6">
+            <el-form-item label="销量" prop="sales">
+              <el-input-number v-model="form.sales" :step="1" :min="0" style="width: 100%" size="small" />
             </el-form-item>
           </el-col>
         </el-row>
-        
-        <el-row :gutter="20">
-          <el-col :span="12">
+
+        <el-row :gutter="16">
+          <el-col :span="6">
             <el-form-item label="适用年份" prop="applyYear">
-              <el-input v-model="form.applyYear" placeholder="如: 2026" />
+              <el-input v-model="form.applyYear" placeholder="如: 2026" size="small" />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :span="6">
             <el-form-item label="作者" prop="author">
-              <el-input v-model="form.author" placeholder="作者/上传者" />
+              <el-input v-model="form.author" placeholder="作者/上传者" size="small" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="6">
+            <el-form-item label="文件大小" prop="fileSize">
+              <el-input v-model="form.fileSize" placeholder="如: 15.2MB" size="small" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="6">
+            <el-form-item label="标签" prop="tags">
+              <el-input v-model="form.tags" placeholder="政治 英语" size="small" />
             </el-form-item>
           </el-col>
         </el-row>
-        
-        <el-form-item label="标签" prop="tags">
-          <el-input v-model="form.tags" placeholder="空格分隔，如: 政治 英语 数学" />
+
+        <el-form-item label="规格" prop="specs" class="compact-item">
+          <el-input v-model="form.specs" placeholder="请输入规格 (如: PDF, 视频课)" size="small" />
         </el-form-item>
-        
-        <el-form-item label="规格" prop="specs">
-          <el-input v-model="form.specs" placeholder="请输入规格 (如: PDF, 视频课)" />
-        </el-form-item>
-        
-        <el-form-item label="简介" prop="description">
-          <el-input v-model="form.description" type="textarea" :rows="3" placeholder="请输入资料简介" />
-        </el-form-item>
-        
-        <el-form-item label="预览内容" prop="previewContent">
-          <el-input v-model="form.previewContent" type="textarea" :rows="3" placeholder="目录或部分预览内容" />
-        </el-form-item>
-        
-        <el-row :gutter="20">
+
+        <el-row :gutter="16">
           <el-col :span="12">
-            <el-form-item label="活动开始" prop="flashStartTime">
+            <el-form-item label="简介" prop="description" class="compact-item">
+              <el-input v-model="form.description" type="textarea" :rows="2" placeholder="请输入资料简介" size="small" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="预览内容" prop="previewContent" class="compact-item">
+              <el-input v-model="form.previewContent" type="textarea" :rows="2" placeholder="目录或部分预览内容" size="small" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row :gutter="16">
+          <el-col :span="6">
+            <el-form-item label="活动时间" class="compact-item">
               <el-date-picker
                 v-model="form.flashStartTime"
                 type="datetime"
                 value-format="YYYY-MM-DDTHH:mm:ss"
-                placeholder="选填"
+                placeholder="开始"
                 style="width: 100%"
+                size="small"
               />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
-            <el-form-item label="活动结束" prop="flashEndTime">
+          <el-col :span="6">
+            <el-form-item label="至" class="compact-item">
               <el-date-picker
                 v-model="form.flashEndTime"
                 type="datetime"
                 value-format="YYYY-MM-DDTHH:mm:ss"
-                placeholder="选填"
+                placeholder="结束"
                 style="width: 100%"
+                size="small"
               />
             </el-form-item>
           </el-col>
+          <el-col :span="6">
+            <el-form-item label="封面" prop="coverImg" class="compact-item">
+              <el-upload
+                class="avatar-uploader"
+                action="#"
+                drag
+                :http-request="uploadRequest"
+                :show-file-list="false"
+                :on-success="handleCoverSuccess"
+                :on-error="handleCoverError"
+                :before-upload="beforeCoverUpload"
+              >
+                <img v-if="form.coverImg" :src="form.coverImg" class="avatar" />
+                <div v-else>
+                  <el-icon class="avatar-uploader-icon"><Plus /></el-icon>
+                  <div class="avatar-upload-text">点击上传</div>
+                </div>
+              </el-upload>
+            </el-form-item>
+          </el-col>
         </el-row>
-        
-        <el-form-item label="封面" prop="coverImg">
-          <el-upload
-            class="avatar-uploader"
-            action="#"
-            drag
-            :http-request="uploadRequest"
-            :show-file-list="false"
-            :on-success="handleCoverSuccess"
-            :on-error="handleCoverError"
-            :before-upload="beforeCoverUpload"
-          >
-            <img v-if="form.coverImg" :src="form.coverImg" class="avatar" />
-            <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
-          </el-upload>
-        </el-form-item>
-        
-        <el-form-item label="资料文件" prop="fileUrl">
+
+        <el-form-item label="资料文件" prop="fileUrl" class="compact-item">
           <el-upload
             ref="fileUploadRef"
             class="file-uploader"
@@ -235,17 +241,16 @@
             :limit="1"
           >
             <el-icon class="el-icon--upload"><upload-filled /></el-icon>
-            <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+            <div class="el-upload__text">拖拽文件到此处，或<em>点击上传</em></div>
             <template #tip>
-              <div class="el-upload__tip">
-                支持 PDF, Word, Zip, 视频, 音频等格式，文件大小不超过 50MB
-              </div>
+              <span class="el-upload__tip">支持 PDF, Word, Zip, 视频, 音频等，≤50MB</span>
             </template>
           </el-upload>
-          <div v-if="form.fileUrl" class="file-link-preview">
+          <div v-if="form.fileUrl" class="file-link-preview" @click="viewFile">
             <el-icon><Document /></el-icon>
-            <span>已上传: {{ form.fileUrl }}</span>
-            <el-button type="danger" link size="small" @click="clearFileUpload">删除</el-button>
+            <span class="file-name">{{ getFileName(form.fileUrl) }}</span>
+            <el-button type="primary" link size="small" @click.stop="viewFile">查看</el-button>
+            <el-button type="danger" link size="small" @click.stop="clearFileUpload">删除</el-button>
           </div>
         </el-form-item>
       </el-form>
@@ -311,6 +316,18 @@ const clearFileUpload = () => {
   fileUploadProcessed.value = false
   if (fileUploadRef.value) {
     fileUploadRef.value.clearFiles()
+  }
+}
+
+const getFileName = (url) => {
+  if (!url) return ''
+  const parts = url.split('/')
+  return parts[parts.length - 1] || url
+}
+
+const viewFile = () => {
+  if (form.fileUrl) {
+    window.open(form.fileUrl, '_blank')
   }
 }
 
@@ -736,6 +753,29 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.compact-form :deep(.el-form-item) {
+  margin-bottom: 12px;
+}
+
+.compact-form :deep(.el-form-item__label) {
+  padding-right: 8px;
+}
+
+.compact-form :deep(.el-input__wrapper),
+.compact-form :deep(.el-textarea__inner) {
+  padding: 4px 11px;
+}
+
+.compact-item :deep(.el-form-item__content) {
+  line-height: 32px;
+}
+
+.material-edit-dialog :deep(.el-dialog__body) {
+  padding: 16px 20px;
+  max-height: 65vh;
+  overflow-y: auto;
+}
+
 .avatar-uploader .el-upload {
   border: 1px dashed var(--el-border-color);
   border-radius: 6px;
@@ -743,6 +783,9 @@ onMounted(() => {
   position: relative;
   overflow: hidden;
   transition: var(--el-transition-duration-fast);
+  width: 100%;
+  text-align: center;
+  padding: 8px 0;
 }
 
 .avatar-uploader .el-upload:hover {
@@ -750,18 +793,26 @@ onMounted(() => {
 }
 
 .avatar-uploader-icon {
-  font-size: 28px;
+  font-size: 20px;
   color: #8c939d;
-  width: 178px;
-  height: 178px;
+  width: 40px;
+  height: 40px;
   text-align: center;
-  line-height: 178px;
+  line-height: 40px;
+  margin: 0 auto;
+}
+
+.avatar-upload-text {
+  font-size: 12px;
+  color: #8c939d;
+  margin-top: 4px;
 }
 
 .avatar {
-  width: 178px;
-  height: 178px;
+  width: 60px;
+  height: 60px;
   display: block;
+  margin: 0 auto;
 }
 
 .file-uploader {
@@ -809,10 +860,23 @@ onMounted(() => {
   border-radius: 6px;
   font-size: 14px;
   color: #606266;
+  cursor: pointer;
+}
+
+.file-link-preview:hover {
+  background: #ecf5ff;
 }
 
 .file-link-preview .el-icon {
   font-size: 16px;
+  color: #409eff;
+}
+
+.file-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: #409eff;
 }
 

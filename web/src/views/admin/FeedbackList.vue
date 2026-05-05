@@ -3,6 +3,13 @@
     <div class="header">
       <h2>反馈管理</h2>
       <div class="filters">
+        <el-select v-model="filterType" placeholder="类型筛选" clearable style="width: 120px; margin-right: 10px" @change="handleSearch">
+          <el-option label="功能建议" value="suggest" />
+          <el-option label="Bug反馈" value="bug" />
+          <el-option label="内容纠错" value="complaint" />
+          <el-option label="账号问题" value="account" />
+          <el-option label="其他" value="other" />
+        </el-select>
         <el-select v-model="filterStatus" placeholder="状态筛选" clearable style="width: 120px; margin-right: 10px">
           <el-option label="待处理" value="pending" />
           <el-option label="已回复" value="replied" />
@@ -33,7 +40,7 @@
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="type" label="问题类型" width="100">
           <template #default="{ row }">
-            <el-tag v-if="row.type" type="primary" effect="plain">{{ row.type }}</el-tag>
+            <el-tag v-if="row.type" :type="getTypeTagType(row.type)" effect="plain">{{ getTypeLabel(row.type) }}</el-tag>
             <span v-else style="color: #999">-</span>
           </template>
         </el-table-column>
@@ -94,7 +101,7 @@
         </div>
         <div class="detail-row" v-if="currentFeedback.type">
           <span class="label">问题类型：</span>
-          <el-tag type="primary" effect="plain">{{ currentFeedback.type }}</el-tag>
+          <el-tag :type="getTypeTagType(currentFeedback.type)" effect="plain">{{ getTypeLabel(currentFeedback.type) }}</el-tag>
         </div>
         <div class="detail-row" v-if="currentFeedback.contact">
           <span class="label">联系方式：</span>
@@ -151,6 +158,7 @@ const pageNum = ref(1)
 const pageSize = ref(10)
 const keyword = ref('')
 const filterStatus = ref('')
+const filterType = ref('')
 const selectedRows = ref([])
 
 const replyDialogVisible = ref(false)
@@ -165,6 +173,7 @@ const fetchFeedbacks = async () => {
         pageNum: pageNum.value,
         pageSize: pageSize.value,
         keyword: keyword.value,
+        type: filterType.value || undefined,
         status: filterStatus.value === 'pending' ? 0 : (filterStatus.value === 'replied' ? 1 : undefined)
     }
     const res = await getFeedbackList(params)
@@ -176,6 +185,30 @@ const fetchFeedbacks = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const typeMap = {
+  suggest: '功能建议',
+  bug: 'Bug反馈',
+  complaint: '内容纠错',
+  account: '账号问题',
+  other: '其他'
+}
+
+const typeTagMap = {
+  suggest: 'primary',
+  bug: 'danger',
+  complaint: 'warning',
+  account: 'info',
+  other: ''
+}
+
+const getTypeLabel = (type) => {
+  return typeMap[type] || type
+}
+
+const getTypeTagType = (type) => {
+  return typeTagMap[type] || 'primary'
 }
 
 const handleSearch = () => {

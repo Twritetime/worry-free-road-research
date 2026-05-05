@@ -23,6 +23,7 @@ import NewsManage from '../views/admin/NewsManage.vue'
 import GuideManage from '../views/admin/GuideManage.vue'
 import ForumManage from '../views/admin/ForumManage.vue'
 import OrderManage from '../views/admin/OrderManage.vue'
+import AiChatManage from '../views/admin/AiChatManage.vue'
 import { useUserStore } from '@/stores/user'
 import { getUserInfo } from '@/api/user'
 import { ElMessage } from 'element-plus'
@@ -59,7 +60,8 @@ const routes = [
       { path: 'guides', name: 'AdminGuides', component: GuideManage },
       { path: 'forum', name: 'AdminForum', component: ForumManage },
       { path: 'orders', name: 'AdminOrders', component: OrderManage },
-      { path: 'feedbacks', name: 'AdminFeedbacks', component: FeedbackList }
+      { path: 'feedbacks', name: 'AdminFeedbacks', component: FeedbackList },
+      { path: 'ai-chat', name: 'AdminAiChat', component: AiChatManage }
     ]
   }
 ]

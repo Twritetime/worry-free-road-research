@@ -7,10 +7,13 @@ import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.yanluwuyou.entity.ChatMessage;
 import com.yanluwuyou.entity.Material;
+import com.yanluwuyou.entity.User;
 import com.yanluwuyou.mapper.ChatMessageMapper;
 import com.yanluwuyou.mapper.MaterialMapper;
+import com.yanluwuyou.mapper.UserMapper;
 import com.yanluwuyou.service.AiChatService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +38,9 @@ public class AiChatServiceImpl implements AiChatService {
 
     @Autowired
     private MaterialMapper materialMapper;
+
+    @Autowired
+    private UserMapper userMapper;
 
     @Value("${ai.deepseek.enabled:false}")
     private boolean aiEnabled;
@@ -114,8 +120,7 @@ public class AiChatServiceImpl implements AiChatService {
         LambdaQueryWrapper<ChatMessage> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ChatMessage::getUserId, userId)
                 .eq(ChatMessage::getSessionId, sessionId)
-                .orderByAsc(ChatMessage::getCreateTime)
-                .last("LIMIT " + limit);
+                .orderByAsc(ChatMessage::getCreateTime);
         return chatMessageMapper.selectList(queryWrapper);
     }
 
@@ -674,11 +679,130 @@ public class AiChatServiceImpl implements AiChatService {
         for (Material m : materials) {
             if (count >= 5) break;
             String price = m.getPrice() != null ? m.getPrice().toString() : "未知";
-            sb.append(String.format("• [%s](path=/materials/%d) - %s元 [%s]\n",
-                    m.getName(), m.getId(), price,
-                    m.getCategory() != null ? m.getCategory() : "未分类"));
+            sb.append(String.format("• [%s](path=/materials/%d) - %s元\n",
+                    m.getName(), m.getId(), price));
             count++;
         }
         return sb.toString();
+    }
+
+    @Override
+    public Page<ChatMessage> adminGetChatList(Integer pageNum, Integer pageSize, Long userId, String keyword) {
+        Page<ChatMessage> page = new Page<>(pageNum, pageSize);
+        LambdaQueryWrapper<ChatMessage> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ChatMessage::getRole, ChatMessage.ROLE_USER);
+
+        if (userId != null && userId > 0) {
+            wrapper.eq(ChatMessage::getUserId, userId);
+        }
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            final List<Long> matchedUserIds = new ArrayList<>();
+            LambdaQueryWrapper<User> userQuery = new LambdaQueryWrapper<>();
+            userQuery.like(User::getNickname, keyword)
+                    .or().like(User::getUsername, keyword);
+            List<User> matchedUsers = userMapper.selectList(userQuery);
+            if (matchedUsers != null && !matchedUsers.isEmpty()) {
+                matchedUserIds.addAll(matchedUsers.stream()
+                        .map(User::getId)
+                        .collect(Collectors.toList()));
+            }
+
+            if (!matchedUserIds.isEmpty()) {
+                wrapper.and(w -> w.like(ChatMessage::getContent, keyword)
+                        .or().like(ChatMessage::getSessionId, keyword)
+                        .or().in(ChatMessage::getUserId, matchedUserIds));
+            } else {
+                wrapper.and(w -> w.like(ChatMessage::getContent, keyword)
+                        .or().like(ChatMessage::getSessionId, keyword));
+            }
+        }
+
+        wrapper.orderByDesc(ChatMessage::getCreateTime);
+        Page<ChatMessage> result = chatMessageMapper.selectPage(page, wrapper);
+
+        List<Long> userIds = result.getRecords().stream()
+                .map(ChatMessage::getUserId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        if (!userIds.isEmpty()) {
+            LambdaQueryWrapper<User> userWrapper = new LambdaQueryWrapper<>();
+            userWrapper.in(User::getId, userIds);
+            List<User> users = userMapper.selectList(userWrapper);
+            Map<Long, String> userMap = users.stream()
+                    .collect(Collectors.toMap(User::getId, u -> u.getNickname() != null ? u.getNickname() : u.getUsername()));
+
+            for (ChatMessage msg : result.getRecords()) {
+                msg.setNickname(userMap.getOrDefault(msg.getUserId(), "未知用户"));
+            }
+        }
+
+        return result;
+    }
+
+    @Override
+    public List<ChatMessage> adminGetChatSession(String sessionId) {
+        if (sessionId == null || sessionId.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+        LambdaQueryWrapper<ChatMessage> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ChatMessage::getSessionId, sessionId)
+                .orderByAsc(ChatMessage::getCreateTime);
+        return chatMessageMapper.selectList(wrapper);
+    }
+
+    @Override
+    public void adminDeleteSession(String sessionId) {
+        if (sessionId == null || sessionId.trim().isEmpty()) {
+            return;
+        }
+        LambdaQueryWrapper<ChatMessage> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ChatMessage::getSessionId, sessionId);
+        chatMessageMapper.delete(wrapper);
+    }
+
+    @Override
+    public void adminDeleteMessage(Long id) {
+        if (id == null) {
+            return;
+        }
+        chatMessageMapper.deleteById(id);
+    }
+
+    @Override
+    public Map<String, Object> adminGetStats() {
+        Map<String, Object> stats = new HashMap<>();
+
+        LambdaQueryWrapper<ChatMessage> totalWrapper = new LambdaQueryWrapper<>();
+        Long totalMessages = chatMessageMapper.selectCount(totalWrapper);
+        stats.put("totalMessages", totalMessages);
+
+        LambdaQueryWrapper<ChatMessage> todayWrapper = new LambdaQueryWrapper<>();
+        todayWrapper.ge(ChatMessage::getCreateTime, LocalDateTime.now().toLocalDate().atStartOfDay());
+        Long todayMessages = chatMessageMapper.selectCount(todayWrapper);
+        stats.put("todayMessages", todayMessages);
+
+        LambdaQueryWrapper<ChatMessage> userMsgWrapper = new LambdaQueryWrapper<>();
+        userMsgWrapper.eq(ChatMessage::getRole, ChatMessage.ROLE_USER);
+        userMsgWrapper.select(ChatMessage::getUserId);
+        List<ChatMessage> userMessages = chatMessageMapper.selectList(userMsgWrapper);
+        long activeUsers = userMessages.stream()
+                .map(ChatMessage::getUserId)
+                .distinct()
+                .count();
+        stats.put("activeUsers", activeUsers);
+
+        LambdaQueryWrapper<ChatMessage> sessionWrapper = new LambdaQueryWrapper<>();
+        sessionWrapper.eq(ChatMessage::getRole, ChatMessage.ROLE_USER);
+        sessionWrapper.select(ChatMessage::getSessionId);
+        List<ChatMessage> sessions = chatMessageMapper.selectList(sessionWrapper);
+        long totalSessions = sessions.stream()
+                .map(ChatMessage::getSessionId)
+                .distinct()
+                .count();
+        stats.put("totalSessions", totalSessions);
+
+        return stats;
     }
 }

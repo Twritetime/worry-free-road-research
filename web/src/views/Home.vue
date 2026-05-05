@@ -176,7 +176,7 @@
             </div>
         </div>
         <div class="forum-list">
-            <div v-for="item in postList" :key="item.id" class="forum-card" @click="$router.push(`/forum/${item.id}`)">
+            <div v-for="item in postList" :key="item.id" class="forum-card" @click="handlePostClick(item.id)">
                 <div class="forum-content">
                     <h4 class="forum-title">{{ item.title }}</h4>
                     <div class="forum-meta">
@@ -229,7 +229,7 @@ import { storeToRefs } from 'pinia'
 
 const router = useRouter()
 const userStore = useUserStore()
-const { isFrontAdmin } = storeToRefs(userStore)
+const { isFrontAdmin, user } = storeToRefs(userStore)
 
 const newsList = ref([])
 const materialList = ref([])
@@ -240,10 +240,10 @@ const dialogVisible = ref(false)
 const newsForm = ref({})
 const formTitle = ref('发布资讯')
 const NEWS_TYPE_OPTIONS = [
-    { label: '报考指南', value: '报考' },
-    { label: '政策解读', value: '政策' },
-    { label: '备考经验', value: '经验' },
-    { label: '复试调剂', value: '复试调剂' }
+    { label: '报考指南', value: 'notice' },
+    { label: '政策解读', value: 'policy' },
+    { label: '备考活动', value: 'activity' },
+    { label: '其他资讯', value: 'other' }
 ]
 const NEWS_TYPE_LABEL_MAP = NEWS_TYPE_OPTIONS.reduce((map, item) => {
     map[item.value] = item.label
@@ -300,6 +300,15 @@ const fetchPosts = async () => {
     } catch (error) {
         console.error(error)
     }
+}
+
+const handlePostClick = (id) => {
+    if (!user.value?.id) {
+        ElMessage.warning('请先登录')
+        router.push('/login')
+        return
+    }
+    router.push(`/forum/${id}`)
 }
 
 const viewNews = (id) => {

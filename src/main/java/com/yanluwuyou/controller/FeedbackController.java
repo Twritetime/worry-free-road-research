@@ -37,6 +37,7 @@ public class FeedbackController {
     @GetMapping("/list")
     public Result<Page<Feedback>> list(@RequestParam(required = false) Long userId,
                                        @RequestParam(required = false) String keyword,
+                                       @RequestParam(required = false) String type,
                                        @RequestParam(required = false) Integer status,
                                        @RequestParam(defaultValue = "1") Integer pageNum,
                                        @RequestParam(defaultValue = "10") Integer pageSize) {
@@ -52,6 +53,9 @@ public class FeedbackController {
         if (StrUtil.isNotBlank(keyword)) {
             String safeKeyword = securityUtil.sanitizeHtml(keyword);
             query.like(Feedback::getContent, safeKeyword);
+        }
+        if (StrUtil.isNotBlank(type)) {
+            query.eq(Feedback::getType, type);
         }
         if (status != null) {
             query.eq(Feedback::getStatus, status);

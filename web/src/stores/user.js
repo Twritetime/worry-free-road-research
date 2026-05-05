@@ -36,6 +36,7 @@ export const useUserStore = defineStore('user', () => {
     const canManageMaterials = computed(() => hasAdminAccess.value)
     const canManageContent = computed(() => hasAdminAccess.value)
     const canManageFeedback = computed(() => hasAdminAccess.value)
+    const canManageAi = computed(() => isAdmin.value)
     const userInfo = computed(() => frontUser.value)
     const adminInfo = computed(() => adminUser.value)
 
@@ -90,6 +91,7 @@ export const useUserStore = defineStore('user', () => {
         canManageContent,
         isFrontAdmin,
         canManageFeedback,
+        canManageAi,
         userInfo,
         adminInfo,
         setFrontUser,

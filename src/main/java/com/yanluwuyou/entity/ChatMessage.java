@@ -1,13 +1,16 @@
 package com.yanluwuyou.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.time.LocalDateTime;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @TableName("yl_chat_message")
 public class ChatMessage extends BaseEntity {
 
@@ -23,6 +26,9 @@ public class ChatMessage extends BaseEntity {
     private String content;
 
     private LocalDateTime createTime;
+
+    @TableField(exist = false)
+    private String nickname;
 
     public static final int ROLE_USER = 1;
     public static final int ROLE_ASSISTANT = 2;

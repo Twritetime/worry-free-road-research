@@ -43,6 +43,10 @@
             <el-icon><Message /></el-icon>
             <span>反馈管理</span>
           </el-menu-item>
+          <el-menu-item index="/admin/ai-chat" v-if="canManageAi">
+            <el-icon><Service /></el-icon>
+            <span>AI助手管理</span>
+          </el-menu-item>
           <el-menu-item index="/">
             <el-icon><HomeFilled /></el-icon>
             <span>返回前台</span>
@@ -63,7 +67,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { DataLine, User, HomeFilled, Message, Files, Document, Compass, ChatLineSquare, Tickets } from '@element-plus/icons-vue'
+import { DataLine, User, HomeFilled, Message, Files, Document, Compass, ChatLineSquare, Tickets, Service } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { storeToRefs } from 'pinia'
 
@@ -71,7 +75,7 @@ const router = useRouter()
 const route = useRoute()
 const activeMenu = computed(() => route.path)
 const userStore = useUserStore()
-const { canViewDashboard, canManageUsers, canManageOrders, canManageMaterials, canManageContent, canManageFeedback, adminInfo } = storeToRefs(userStore)
+const { canViewDashboard, canManageUsers, canManageOrders, canManageMaterials, canManageContent, canManageFeedback, canManageAi, adminInfo } = storeToRefs(userStore)
 
 const handleAdminLogout = () => {
   userStore.logoutAdmin()

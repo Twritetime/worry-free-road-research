@@ -203,6 +203,9 @@ onMounted(() => {
   document.addEventListener('mousemove', handleMouseMove)
   document.addEventListener('mouseup', handleMouseUp)
   document.addEventListener('click', handleClickOutside)
+  if (isLoggedIn.value) {
+    loadHistory()
+  }
 })
 
 onUnmounted(() => {
@@ -245,10 +248,11 @@ const goLogin = () => {
 
 const loadHistory = async () => {
   try {
-    const res = await getChatHistory({ sessionId: sessionId.value, limit: 20 })
-    if (res && Array.isArray(res)) {
+    const sid = sessionId.value || undefined
+    const res = await getChatHistory({ sessionId: sid, limit: 50 })
+    if (res && Array.isArray(res) && res.length > 0) {
       messages.value = res
-      if (res.length > 0 && res[0].sessionId) {
+      if (res[0].sessionId) {
         sessionId.value = res[0].sessionId
         localStorage.setItem('ai_session_id', sessionId.value)
       }
