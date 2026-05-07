@@ -24,7 +24,7 @@
 | Hutool | 5.8.25 | Java工具类库 |
 | Lombok | 1.18.36 | 代码简化 |
 | Knife4j | 4.3.0 | API文档 |
-| Jsoup | 1.17.2 | 数据爬取 |
+| Jsoup | 1.17.2 | HTML内容净化（XSS防护） |
 | 支付宝SDK | 4.16.2 | 支付集成 |
 | Fastjson | 1.2.61 | JSON处理 |
 
@@ -52,7 +52,7 @@
 ### 资讯中心
 - 考研动态与新闻列表
 - 资讯详情浏览
-- 基于 Jsoup 的数据爬取
+- 资讯分类管理（通知公告、政策解读、活动资讯等）
 
 ### 资料商城
 - 资料分类浏览与搜索（支持关键词、分类、标签、适用年份筛选）
@@ -86,7 +86,7 @@
 
 ### 交流论坛
 - 帖子发布、编辑、删除
-- 评论功能
+- 评论功能（支持楼中楼回复）
 - 点赞、收藏
 - 帖子分类浏览
 
@@ -94,16 +94,17 @@
 - 备考经验分享
 - 各科目复习建议
 - 指南文章详情
+- 院校专业信息展示
 
 ### 管理后台
 - 数据统计仪表盘（用户、订单、销售额、帖子、反馈等）
-- 用户管理
+- 用户管理（禁用/启用账号）
 - 资料管理（上架、下架、编辑）
 - 订单管理
-- 资讯管理
-- 论坛管理
-- 反馈管理
-- AI助手管理
+- 资讯管理（发布、编辑、删除）
+- 论坛管理（帖子审核、评论管理）
+- 反馈管理（用户反馈回复）
+- AI助手管理（对话记录查看、统计）
 
 ## 项目结构
 
@@ -111,7 +112,8 @@
 worry-free-road-research/
 ├── sql/                          # 数据库初始化脚本
 │   ├── init.sql                  # 数据库表结构
-│   └── yanluwuyou.sql            # 完整数据（含示例数据）
+│   ├── yanluwuyou.sql            # 完整数据（含示例数据）
+│   └── yanluwuyou-仅结构.sql      # 仅表结构（无数据）
 ├── src/                          # 后端源代码
 │   └── main/
 │       ├── java/com/yanluwuyou/
@@ -135,6 +137,9 @@ worry-free-road-research/
 │   │   ├── router/               # 路由配置
 │   │   └── assets/               # 静态资源
 │   └── package.json
+├── doc/                          # 项目文档
+│   ├── 答辩PPT大纲.md
+│   └── 答辩提问与回答.md
 └── files/                        # 文件上传存储目录
 ```
 
@@ -248,7 +253,7 @@ ai:
   deepseek:
     enabled: true
     api-key: your_deepseek_api_key
-    base-url: https://api.deepseek.com/v1
+    base-url: https://api.deepseek.com
     model: deepseek-chat
 ```
 
@@ -258,11 +263,11 @@ ai:
 ```yaml
 alipay:
   app-id: your_app_id
-  private-key: your_private_key
+  app-private-key: your_private_key
   alipay-public-key: alipay_public_key
-  server-url: https://openapi.alipaydev.com/gateway.do
-  notify-url: http://your_domain/api/alipay/notify
-  return-url: http://your_domain/order/success
+  notify-url: http://your_domain/order/alipay-notify
+  return-url: http://your_domain/order/list
+  gateway-url: https://openapi-sandbox.dl.alipaydev.com/gateway.do
 ```
 
 ### 后端启动
@@ -270,8 +275,8 @@ alipay:
 # 编译安装
 mvn clean install
 
-# 运行应用
-# 直接运行 YanLuWuYouApplication.java
+# 直接运行
+# 运行 YanLuWuYouApplication.java
 
 # 或打包后运行
 mvn clean package
@@ -307,6 +312,7 @@ cd web && npm run build
 - **文件上传**：上传的文件默认存储在项目根目录下的 `files/` 文件夹，生产环境建议配置为独立文件服务器
 - **跨域配置**：后端已通过 `CorsConfig.java` 配置跨域支持，开发环境无需额外配置
 - **数据库**：项目使用 MySQL 8.0+，确保数据库字符集为 `utf8mb4` 以支持 emoji
+- **内容安全**：使用 Jsoup 对富文本内容进行 HTML 净化，防止 XSS 攻击
 
 ## 更新日志
 
