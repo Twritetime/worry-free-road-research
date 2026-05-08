@@ -22,6 +22,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * 评论控制器
+ * 提供评论的查询、发布、删除等功能，支持多级评论
+ */
 @RestController
 @RequestMapping("/comment")
 public class CommentController {
@@ -41,6 +45,15 @@ public class CommentController {
     @Autowired
     private ContentSecurityUtil securityUtil;
 
+    /**
+     * 获取评论列表（支持分页和子评论）
+     * 
+     * @param targetType 目标类型（1-帖子, 2-指南, 3-新闻）
+     * @param targetId 目标ID
+     * @param pageNum 页码
+     * @param pageSize 每页数量
+     * @return 评论分页列表（包含子评论）
+     */
     @GetMapping("/list")
     public Result<Page<Comment>> list(@RequestParam Integer targetType,
                                       @RequestParam Long targetId,
@@ -68,6 +81,14 @@ public class CommentController {
         return Result.success(commentPage);
     }
 
+    /**
+     * 获取帖子评论列表（旧版接口，兼容用）
+     * 
+     * @param postId 帖子ID
+     * @param pageNum 页码
+     * @param pageSize 每页数量
+     * @return 评论分页列表
+     */
     @GetMapping("/list/{postId}")
     public Result<Page<Comment>> listOld(@PathVariable Long postId,
                                       @RequestParam(defaultValue = "1") Integer pageNum,
@@ -75,6 +96,13 @@ public class CommentController {
         return list(1, postId, pageNum, pageSize);
     }
 
+    /**
+     * 发布评论
+     * 需要进行敏感词检测和内容过滤
+     * 
+     * @param comment 评论信息
+     * @return 操作结果
+     */
     @PostMapping
     @RequireLogin
     public Result<?> save(@RequestBody Comment comment) {
@@ -125,6 +153,13 @@ public class CommentController {
         return Result.success();
     }
 
+    /**
+     * 删除评论
+     * 同时删除子评论并更新目标对象的评论数
+     * 
+     * @param id 评论ID
+     * @return 操作结果
+     */
     @DeleteMapping("/{id}")
     @RequireLogin
     public Result<?> delete(@PathVariable Long id) {
@@ -167,9 +202,22 @@ public class CommentController {
                         post.setCommentCount(Math.max(0, post.getCommentCount() - (int)childrenCount));
                         postService.updateById(post);
                     }
+                } else if (comment.getTargetType() == 2) {
+                    Guide guide = guideService.getById(comment.getTargetId());
+                    if (guide != null) {
+                        guide.setCommentCount(Math.max(0, guide.getCommentCount() - (int)childrenCount));
+                        guideService.updateById(guide);
+                    }
+                } else if (comment.getTargetType() == 3) {
+                    News news = newsService.getById(comment.getTargetId());
+                    if (news != null) {
+                        news.setCommentCount(Math.max(0, news.getCommentCount() - (int)childrenCount));
+                        newsService.updateById(news);
+                    }
                 }
             }
             commentService.remove(new LambdaQueryWrapper<Comment>().eq(Comment::getParentId, id));
+            commentService.removeById(id);
         }
         return Result.success();
     }

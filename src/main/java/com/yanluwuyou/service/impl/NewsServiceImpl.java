@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * 新闻资讯服务实现类
+ * 实现新闻的增删改查功能
  */
 @Service
 public class NewsServiceImpl extends ServiceImpl<NewsMapper, News> implements NewsService {

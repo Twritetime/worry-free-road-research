@@ -5,6 +5,7 @@ import com.yanluwuyou.dto.UserStudyProfileDTO;
 
 /**
  * AI学习助手服务接口
+ * 提供个性化学习计划生成、学习画像分析、每日学习建议等功能
  */
 public interface AiStudyAssistantService {
 

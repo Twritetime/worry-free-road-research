@@ -18,9 +18,10 @@
             <el-tag v-if="row.isDefault" type="success" size="small" effect="plain">默认</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="150" fixed="right" align="center">
+        <el-table-column label="操作" width="200" fixed="right" align="center">
           <template #default="{ row }">
             <el-button link type="primary" icon="Edit" @click="handleEdit(row)">编辑</el-button>
+            <el-button link type="success" @click="handleSetDefault(row)" v-if="!row.isDefault">设为默认</el-button>
             <el-button link type="danger" icon="Delete" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
@@ -78,7 +79,7 @@
 
 <script setup>
 import { ref, onMounted, reactive } from 'vue'
-import { getAddressList, saveAddress, updateAddress, deleteAddress } from '@/api/address'
+import { getAddressList, saveAddress, updateAddress, deleteAddress, setDefaultAddress } from '@/api/address'
 import { useUserStore } from '@/stores/user'
 import { storeToRefs } from 'pinia'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -153,6 +154,16 @@ const handleSubmit = async () => {
     fetchAddress()
   } catch (error) {
     ElMessage.error('保存失败')
+  }
+}
+
+const handleSetDefault = async (row) => {
+  try {
+    await setDefaultAddress(row.id)
+    ElMessage.success('设置默认地址成功')
+    fetchAddress()
+  } catch (error) {
+    ElMessage.error('设置默认地址失败')
   }
 }
 

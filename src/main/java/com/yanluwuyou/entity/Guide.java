@@ -1,6 +1,7 @@
 package com.yanluwuyou.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -8,6 +9,8 @@ import lombok.EqualsAndHashCode;
 
 /**
  * 报考指南实体类
+ * 对应数据库表 yl_guide
+ * 存储考研报考相关的指南信息，如招生简章、专业目录等
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -57,5 +60,6 @@ public class Guide extends BaseEntity {
      */
     private Integer status;
 
+    @TableField("sort_order")
     private Integer sortOrder;
 }

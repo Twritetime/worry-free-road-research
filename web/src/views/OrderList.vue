@@ -1,5 +1,35 @@
 <template>
   <div class="order-list-container">
+    <div class="status-tabs">
+      <div
+        class="status-tab"
+        :class="{ active: activeStatus === null }"
+        @click="handleStatusChange(null)"
+      >
+        全部
+      </div>
+      <div
+        class="status-tab"
+        :class="{ active: activeStatus === 0 }"
+        @click="handleStatusChange(0)"
+      >
+        待付款
+      </div>
+      <div
+        class="status-tab"
+        :class="{ active: activeStatus === 1 }"
+        @click="handleStatusChange(1)"
+      >
+        已付款
+      </div>
+      <div
+        class="status-tab"
+        :class="{ active: activeStatus === 2 }"
+        @click="handleStatusChange(2)"
+      >
+        已取消
+      </div>
+    </div>
     <div class="order-list" v-loading="loading">
       <div v-for="order in orderList" :key="order.id" class="order-item">
         <div class="order-header">
@@ -57,6 +87,7 @@ const { user } = storeToRefs(userStore)
 
 const orderList = ref([])
 const loading = ref(false)
+const activeStatus = ref(null)
 
 onMounted(() => {
     // onMounted 中只负责检查一次，如果用户已登录则立即执行
@@ -80,10 +111,10 @@ const fetchOrders = async () => {
         router.push('/login')
         return
     }
-    
+
     loading.value = true
     try {
-        const res = await getOrderList(user.value.id)
+        const res = await getOrderList(user.value.id, activeStatus.value)
         orderList.value = res || []
     } catch (error) {
         console.error(error)
@@ -91,6 +122,11 @@ const fetchOrders = async () => {
     } finally {
         loading.value = false
     }
+}
+
+const handleStatusChange = (status) => {
+    activeStatus.value = status
+    fetchOrders()
 }
 
 const goToMaterial = (id) => {
@@ -178,6 +214,34 @@ const getStatusText = (status) => {
 <style scoped>
 .order-list-container {
     padding-bottom: 20px;
+}
+
+.status-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    background: #fff;
+    padding: 15px 20px;
+    border-radius: 8px;
+    border: 1px solid #ebeef5;
+}
+
+.status-tab {
+    padding: 8px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #606266;
+    transition: all 0.3s;
+}
+
+.status-tab:hover {
+    color: #409eff;
+}
+
+.status-tab.active {
+    background: #409eff;
+    color: #fff;
 }
 
 .order-item {

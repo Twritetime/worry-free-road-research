@@ -15,6 +15,11 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * 推荐服务实现类
+ * 实现基于用户行为的资料推荐功能
+ * 包括个性化推荐、热门资料、最近浏览等
+ */
 @Service
 public class RecommendServiceImpl implements RecommendService {
 

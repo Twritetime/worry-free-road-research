@@ -30,6 +30,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+/**
+ * AI聊天服务实现类
+ * 提供AI对话、历史记录管理、智能回复等功能
+ * 集成DeepSeek AI模型，支持智能问答和资料推荐
+ */
 @Service
 public class AiChatServiceImpl implements AiChatService {
 

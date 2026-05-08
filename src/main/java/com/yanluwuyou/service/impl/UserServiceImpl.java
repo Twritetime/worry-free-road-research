@@ -15,13 +15,23 @@ import java.time.LocalDateTime;
 
 /**
  * 用户服务实现类
+ * 实现用户注册、登录等核心业务逻辑
+ * 继承ServiceImpl获得MyBatis-Plus的基础CRUD能力
  */
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
+    /**
+     * 用户注册实现
+     * 检查用户名唯一性，加密密码后保存到数据库
+     * 
+     * @param userRegisterDTO 注册信息
+     * @return 注册成功的用户（密码已置空）
+     * @throws RuntimeException 当用户名已存在时抛出异常
+     */
     @Override
     public User register(UserRegisterDTO userRegisterDTO) {
-        // 检查用户名是否存在
+        
         User existUser = getOne(new LambdaQueryWrapper<User>()
                 .eq(User::getUsername, userRegisterDTO.getUsername()));
         if (existUser != null) {
@@ -31,7 +41,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         User user = new User();
         BeanUtil.copyProperties(userRegisterDTO, user);
         
-        // 密码加密 (这里使用简单的MD5，实际生产应用BCrypt)
         user.setPassword(DigestUtil.md5Hex(userRegisterDTO.getPassword()));
         user.setRole(User.ROLE_STUDENT);
         user.setStatus(1);
@@ -41,6 +50,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return user;
     }
 
+    /**
+     * 用户登录验证实现
+     * 验证用户名、密码和账户状态
+     * 
+     * @param userLoginDTO 登录信息
+     * @return 登录成功的用户（密码已置空）
+     * @throws RuntimeException 当用户不存在、密码错误或账号被禁用时抛出异常
+     */
     @Override
     public User login(UserLoginDTO userLoginDTO) {
         User user = getOne(new LambdaQueryWrapper<User>()
@@ -50,10 +67,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new RuntimeException("用户不存在");
         }
         
-        // 验证密码
         String inputPwd = userLoginDTO.getPassword();
         String dbPwd = user.getPassword();
-        // 兼容明文密码和MD5加密密码
         if (!dbPwd.equals(DigestUtil.md5Hex(inputPwd)) && !dbPwd.equals(inputPwd)) {
             throw new RuntimeException("密码错误");
         }

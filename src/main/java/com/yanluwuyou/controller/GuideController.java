@@ -227,6 +227,7 @@ public class GuideController {
             String host = uri.getHost();
             if (StrUtil.isBlank(host)) return false;
             String normalized = host.toLowerCase();
+            if (normalized.equals("localhost") || normalized.equals("127.0.0.1")) return true;
             for (String suffix : OFFICIAL_HOST_SUFFIXES) {
                 if (normalized.equals(suffix) || normalized.endsWith("." + suffix)) return true;
             }

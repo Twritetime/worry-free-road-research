@@ -13,6 +13,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * 推荐控制器
+ * 提供基于用户行为的资料推荐功能
+ */
 @RestController
 @RequestMapping("/recommend")
 public class RecommendController {
@@ -20,6 +24,12 @@ public class RecommendController {
     @Autowired
     private RecommendService recommendService;
 
+    /**
+     * 获取个性化推荐资料（基于用户行为）
+     * 
+     * @param limit 推荐数量
+     * @return 推荐资料列表
+     */
     @GetMapping("/materials")
     @RequireLogin
     public Result<List<Material>> getRecommendedMaterials(
@@ -29,6 +39,12 @@ public class RecommendController {
         return Result.success(recommendations);
     }
 
+    /**
+     * 获取热门资料（按销量/浏览量排序）
+     * 
+     * @param limit 返回数量
+     * @return 热门资料列表
+     */
     @GetMapping("/popular")
     public Result<List<Material>> getPopularMaterials(
             @RequestParam(defaultValue = "10") int limit) {
@@ -36,6 +52,12 @@ public class RecommendController {
         return Result.success(popular);
     }
 
+    /**
+     * 获取用户最近浏览的资料
+     * 
+     * @param limit 返回数量
+     * @return 最近浏览资料列表
+     */
     @GetMapping("/recently-viewed")
     @RequireLogin
     public Result<List<Material>> getRecentlyViewedMaterials(

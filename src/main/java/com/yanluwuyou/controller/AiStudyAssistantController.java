@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 /**
  * AI学习助手控制器
+ * 提供个性化学习计划生成、学习画像分析、每日学习建议等功能
  */
 @RestController
 @RequestMapping("/ai-study")

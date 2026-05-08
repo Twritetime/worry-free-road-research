@@ -30,3 +30,10 @@ export function deleteAddress(id) {
         method: 'delete'
     })
 }
+
+export function setDefaultAddress(id) {
+    return request({
+        url: `/address/default/${id}`,
+        method: 'put'
+    })
+}

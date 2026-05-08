@@ -11,6 +11,8 @@ import java.util.List;
 
 /**
  * 评论实体类
+ * 对应数据库表 yl_comment
+ * 存储用户对帖子、指南、新闻等内容的评论，支持多级回复
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

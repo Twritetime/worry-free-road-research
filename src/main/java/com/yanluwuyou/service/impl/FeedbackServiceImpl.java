@@ -6,6 +6,10 @@ import com.yanluwuyou.mapper.FeedbackMapper;
 import com.yanluwuyou.service.FeedbackService;
 import org.springframework.stereotype.Service;
 
+/**
+ * 用户反馈服务实现类
+ * 实现反馈的提交、查询、回复等功能
+ */
 @Service
 public class FeedbackServiceImpl extends ServiceImpl<FeedbackMapper, Feedback> implements FeedbackService {
 }

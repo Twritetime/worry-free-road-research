@@ -61,7 +61,7 @@
       </div>
     </el-card>
 
-    <el-dialog :title="dialogTitle" v-model="dialogVisible" width="700px">
+    <el-dialog :title="dialogTitle" v-model="dialogVisible" width="900px">
       <el-form :model="form" label-width="80px" :rules="rules" ref="formRef">
         <el-form-item label="院校" prop="institution">
           <el-input v-model="form.institution" placeholder="请输入院校名称" />
@@ -73,7 +73,21 @@
           <el-input v-model="form.title" placeholder="请输入指南标题" />
         </el-form-item>
         <el-form-item label="内容" prop="content">
-          <el-input v-model="form.content" type="textarea" :rows="10" placeholder="请输入内容" />
+          <div style="border: 1px solid #ccc; width: 100%">
+            <Toolbar
+              style="border-bottom: 1px solid #ccc"
+              :editor="editorRef"
+              :defaultConfig="toolbarConfig"
+              mode="default"
+            />
+            <Editor
+              style="height: 400px; overflow-y: hidden;"
+              v-model="form.content"
+              :defaultConfig="editorConfig"
+              mode="default"
+              @onCreated="handleEditorCreated"
+            />
+          </div>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -93,13 +107,54 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import '@wangeditor/editor/dist/css/style.css'
+import { ref, reactive, onMounted, onBeforeUnmount, shallowRef } from 'vue'
+import { Editor, Toolbar } from '@wangeditor/editor-for-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
   getGuideListAll, createGuide, updateGuide, deleteGuide, updateGuideStatus,
   swapGuideOrder
 } from '@/api/guide'
 import AdminCommentDialog from '@/components/AdminCommentDialog.vue'
+
+const editorRef = shallowRef()
+const apiBaseUrl = 'http://localhost:8080'
+const uploadUrl = `${apiBaseUrl}/file/upload`
+const toolbarConfig = {
+    excludeKeys: [
+        'group-video'
+    ]
+}
+const editorConfig = {
+    placeholder: '请输入指南内容...',
+    MENU_CONF: {
+        uploadImage: {
+            server: uploadUrl,
+            fieldName: 'file',
+            headers: {
+                // Add auth headers if needed
+            },
+            customInsert: (res, insertFn) => {
+                if (res.code === 0 || res.code === 200) {
+                    const url = res.data || res
+                    insertFn(url)
+                } else {
+                    ElMessage.error('图片上传失败')
+                }
+            }
+        }
+    }
+}
+
+onBeforeUnmount(() => {
+    const editor = editorRef.value
+    if (editor == null) return
+    editor.destroy()
+})
+
+const handleEditorCreated = (editor) => {
+  editorRef.value = editor
+}
 
 const loading = ref(false)
 const guideList = ref([])

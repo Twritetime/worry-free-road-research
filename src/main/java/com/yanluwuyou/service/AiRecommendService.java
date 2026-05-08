@@ -7,6 +7,7 @@ import java.util.List;
 
 /**
  * AI智能推荐服务接口
+ * 提供基于AI的个性化推荐、场景推荐、搭配推荐等功能
  */
 public interface AiRecommendService {
 

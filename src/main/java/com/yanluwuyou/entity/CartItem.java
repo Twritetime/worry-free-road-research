@@ -9,6 +9,8 @@ import lombok.EqualsAndHashCode;
 
 /**
  * 购物车项实体类
+ * 对应数据库表 yl_cart_item
+ * 存储用户购物车中的商品信息
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

@@ -13,6 +13,7 @@ import java.util.List;
 
 /**
  * 购物车控制器
+ * 提供购物车商品的增删改查功能
  */
 @RestController
 @RequestMapping("/cart")
@@ -23,7 +24,10 @@ public class CartItemController {
     private CartItemService cartItemService;
 
     /**
-     * 获取用户购物车
+     * 获取用户购物车列表
+     * 
+     * @param userId 用户ID
+     * @return 购物车商品列表
      */
     @GetMapping("/list")
     public Result<List<CartItem>> list(@RequestParam Long userId) {
@@ -32,7 +36,11 @@ public class CartItemController {
     }
 
     /**
-     * 添加到购物车
+     * 添加商品到购物车
+     * 如果商品已存在则增加数量
+     * 
+     * @param cartItem 购物车项信息
+     * @return 操作结果
      */
     @PostMapping
     public Result<?> add(@RequestBody CartItem cartItem) {
@@ -52,7 +60,10 @@ public class CartItemController {
     }
 
     /**
-     * 更新数量
+     * 更新购物车商品数量
+     * 
+     * @param cartItem 购物车项信息
+     * @return 操作结果
      */
     @PutMapping
     public Result<?> update(@RequestBody CartItem cartItem) {
@@ -67,7 +78,10 @@ public class CartItemController {
     }
 
     /**
-     * 删除购物车项
+     * 删除购物车中的商品
+     * 
+     * @param id 购物车项ID
+     * @return 操作结果
      */
     @DeleteMapping("/{id}")
     public Result<?> delete(@PathVariable Long id) {
@@ -81,7 +95,10 @@ public class CartItemController {
     }
 
     /**
-     * 清空购物车 (指定用户)
+     * 清空用户购物车
+     * 
+     * @param userId 用户ID
+     * @return 操作结果
      */
     @DeleteMapping("/clear")
     public Result<?> clear(@RequestParam Long userId) {

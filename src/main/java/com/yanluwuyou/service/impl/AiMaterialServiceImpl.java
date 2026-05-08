@@ -21,6 +21,11 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * AI资料智能服务实现类
+ * 实现AI智能搜索、自动标签生成、相似资料推荐等功能
+ * 集成DeepSeek AI模型进行语义分析和内容理解
+ */
 @Service
 public class AiMaterialServiceImpl implements AiMaterialService {
 

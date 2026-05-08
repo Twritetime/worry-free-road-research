@@ -24,6 +24,11 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * AI学习助手服务实现类
+ * 实现个性化学习计划生成、学习画像分析、每日学习建议等功能
+ * 集成DeepSeek AI模型进行学习行为分析和规划
+ */
 @Service
 public class AiStudyAssistantServiceImpl implements AiStudyAssistantService {
 

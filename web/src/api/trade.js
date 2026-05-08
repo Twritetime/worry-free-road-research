@@ -45,11 +45,11 @@ export const createOrder = (data) => {
 }
 
 // 获取订单列表
-export const getOrderList = (userId) => {
+export const getOrderList = (userId, status) => {
     return request({
         url: '/order/list',
         method: 'get',
-        params: { userId }
+        params: { userId, status }
     })
 }
 

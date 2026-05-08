@@ -8,6 +8,7 @@ import java.util.List;
 
 /**
  * AI资料智能服务接口
+ * 提供AI智能搜索、自动标签生成、相似资料推荐等功能
  */
 public interface AiMaterialService {
 

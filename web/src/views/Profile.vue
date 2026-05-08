@@ -166,8 +166,9 @@
                       <el-table-column prop="viewCount" label="浏览" width="100" align="center"></el-table-column>
                       <el-table-column prop="likeCount" label="点赞" width="100" align="center"></el-table-column>
                       <el-table-column prop="commentCount" label="评论" width="100" align="center"></el-table-column>
-                      <el-table-column label="操作" width="100" fixed="right" align="center">
+                      <el-table-column label="操作" width="150" fixed="right" align="center">
                         <template #default="{ row }">
+                          <el-button type="primary" link @click="handleEditPost(row)">编辑</el-button>
                           <el-button type="danger" link @click="handleDeletePost(row.id)">删除</el-button>
                         </template>
                       </el-table-column>
@@ -282,11 +283,16 @@ const normalizeAvatarUrl = (url) => {
 }
 const avatarSrc = computed(() => normalizeAvatarUrl(userInfo.value.avatar))
 
-const handleAvatarSuccess = (res) => {
+const handleAvatarSuccess = async (res) => {
     const avatarUrl = res?.data || res
     userInfo.value.avatar = normalizeAvatarUrl(avatarUrl)
     userStore.setUser(userInfo.value)
     ElMessage.success('头像上传成功')
+    try {
+        await updateUser(userInfo.value)
+    } catch (error) {
+        console.error(error)
+    }
 }
 
 const handleAvatarError = () => {
@@ -419,6 +425,10 @@ const fetchMyPosts = async () => {
 const handlePostPageChange = (val) => {
     postPageNum.value = val
     fetchMyPosts()
+}
+
+const handleEditPost = (row) => {
+    router.push(`/posts/edit/${row.id}`)
 }
 
 const handleDeletePost = (id) => {

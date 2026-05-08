@@ -22,6 +22,11 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * AI智能推荐服务实现类
+ * 实现基于AI的个性化推荐、场景推荐、搭配推荐等功能
+ * 集成DeepSeek AI模型进行用户行为分析和推荐决策
+ */
 @Service
 public class AiRecommendServiceImpl implements AiRecommendService {
 

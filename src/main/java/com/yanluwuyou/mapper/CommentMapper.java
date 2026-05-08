@@ -5,7 +5,9 @@ import com.yanluwuyou.entity.Comment;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
- * 评论Mapper接口
+ * 评论数据访问层接口
+ * 继承MyBatis-Plus的BaseMapper，提供评论实体的数据库操作
+ * 对应数据库表: yl_comment
  */
 @Mapper
 public interface CommentMapper extends BaseMapper<Comment> {

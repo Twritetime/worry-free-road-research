@@ -404,7 +404,7 @@ const handleSubmit = async () => {
 }
 
 .search-input-small {
-    width: 150px;
+    width: 220px;
 }
 
 .main-content {

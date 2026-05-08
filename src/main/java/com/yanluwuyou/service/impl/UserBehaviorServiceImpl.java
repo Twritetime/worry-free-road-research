@@ -8,6 +8,10 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 
+/**
+ * 用户行为记录服务实现类
+ * 实现用户行为的记录和存储功能
+ */
 @Service
 public class UserBehaviorServiceImpl extends ServiceImpl<UserBehaviorMapper, UserBehavior> implements UserBehaviorService {
 

@@ -6,6 +6,7 @@ import java.util.List;
 
 /**
  * AI学习计划DTO
+ * 封装AI生成的个性化学习计划，包含阶段划分和每日任务
  */
 @Data
 public class StudyPlanDTO {

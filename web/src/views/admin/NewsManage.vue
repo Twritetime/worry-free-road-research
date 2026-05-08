@@ -97,11 +97,21 @@
           </el-upload>
         </el-form-item>
         <el-form-item label="内容" prop="content">
-          <Editor
-            v-model="form.content"
-            :init="editorInit"
-            @onEditorChange="handleEditorChange"
-          />
+          <div style="border: 1px solid #ccc; width: 100%">
+            <Toolbar
+              style="border-bottom: 1px solid #ccc"
+              :editor="editorRef"
+              :defaultConfig="toolbarConfig"
+              mode="default"
+            />
+            <Editor
+              style="height: 400px; overflow-y: hidden;"
+              v-model="form.content"
+              :defaultConfig="editorConfig"
+              mode="default"
+              @onCreated="handleEditorCreated"
+            />
+          </div>
         </el-form-item>
         <el-form-item label="上传时间">
           <el-date-picker
@@ -139,36 +149,52 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import '@wangeditor/editor/dist/css/style.css'
+import { ref, reactive, onMounted, onBeforeUnmount, shallowRef } from 'vue'
+import { Editor, Toolbar } from '@wangeditor/editor-for-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
-import Editor from '@tinymce/tinymce-vue'
 import { getNewsListAll, createNews, updateNews, deleteNews, updateNewsStatus, swapNewsOrder } from '@/api/news'
 import AdminCommentDialog from '@/components/AdminCommentDialog.vue'
 import request from '@/utils/request'
-import 'tinymce/tinymce'
-import 'tinymce/icons/default'
-import 'tinymce/models/dom'
-import 'tinymce/themes/silver'
-import 'tinymce/plugins/advlist'
-import 'tinymce/plugins/autolink'
-import 'tinymce/plugins/lists'
-import 'tinymce/plugins/link'
-import 'tinymce/plugins/image'
-import 'tinymce/plugins/charmap'
-import 'tinymce/plugins/preview'
-import 'tinymce/plugins/anchor'
-import 'tinymce/plugins/searchreplace'
-import 'tinymce/plugins/visualblocks'
-import 'tinymce/plugins/code'
-import 'tinymce/plugins/fullscreen'
-import 'tinymce/plugins/insertdatetime'
-import 'tinymce/plugins/media'
-import 'tinymce/plugins/table'
-import 'tinymce/plugins/help'
-import 'tinymce/plugins/wordcount'
-import 'tinymce/skins/ui/oxide/skin.min.css'
-import 'tinymce/skins/content/default/content.min.css'
+
+const editorRef = shallowRef()
+const apiBaseUrl = 'http://localhost:8080'
+const uploadUrl = `${apiBaseUrl}/file/upload`
+const toolbarConfig = {
+    excludeKeys: [
+        'group-video'
+    ]
+}
+const editorConfig = {
+    placeholder: '请输入资讯内容...',
+    MENU_CONF: {
+        uploadImage: {
+            server: uploadUrl,
+            fieldName: 'file',
+            headers: {
+            },
+            customInsert: (res, insertFn) => {
+                if (res.code === 0 || res.code === 200) {
+                    const url = res.data || res
+                    insertFn(url)
+                } else {
+                    ElMessage.error('图片上传失败')
+                }
+            }
+        }
+    }
+}
+
+onBeforeUnmount(() => {
+    const editor = editorRef.value
+    if (editor == null) return
+    editor.destroy()
+})
+
+const handleEditorCreated = (editor) => {
+  editorRef.value = editor
+}
 
 const loading = ref(false)
 const newsList = ref([])
@@ -210,40 +236,6 @@ const rules = {
   title: [{ required: true, message: '请输入标题', trigger: 'blur' }],
   type: [{ required: true, message: '请选择类型', trigger: 'change' }],
   content: [{ required: true, message: '请输入内容', trigger: 'change' }]
-}
-
-const uploadEditorImage = async (file) => {
-  const formData = new FormData()
-  formData.append('file', file)
-  const res = await request.post('/file/upload', formData)
-  if (typeof res === 'string') {
-    return res
-  }
-  if (res && typeof res.url === 'string') {
-    return res.url
-  }
-  if (res && typeof res.data === 'string') {
-    return res.data
-  }
-  throw new Error('图片上传失败')
-}
-
-const editorInit = {
-  height: 420,
-  menubar: 'file edit insert format table tools help',
-  language: 'zh_CN',
-  plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table help wordcount',
-  toolbar: 'undo redo | blocks | bold italic underline strikethrough forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image media table | removeformat code fullscreen',
-  toolbar_mode: 'sliding',
-  branding: false,
-  statusbar: true,
-  content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px } img { max-width: 100%; height: auto; }',
-  automatic_uploads: true,
-  paste_data_images: true,
-  images_file_types: 'jpg,jpeg,png,gif,webp,bmp',
-  images_upload_handler: (blobInfo) => {
-    return uploadEditorImage(blobInfo.blob())
-  }
 }
 
 const fetchData = async () => {
@@ -420,10 +412,6 @@ const normalizeDateTime = (time) => {
     return ''
   }
   return String(time).replace(' ', 'T')
-}
-
-const handleEditorChange = () => {
-  formRef.value?.validateField('content')
 }
 
 const submitForm = () => {

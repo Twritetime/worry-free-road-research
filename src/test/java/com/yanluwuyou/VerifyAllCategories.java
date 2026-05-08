@@ -9,6 +9,10 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * 考研网站分类验证测试类
+ * 验证爬虫能否正确抓取各个分类的链接和内容
+ */
 public class VerifyAllCategories {
 
     @Test

@@ -13,6 +13,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * AI聊天控制器
+ * 提供AI对话、历史记录查询、管理等功能
+ */
 @RestController
 @RequestMapping("/ai")
 public class AiChatController {

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * 订单项服务实现类
+ * 实现订单项的增删改查功能
  */
 @Service
 public class OrderItemServiceImpl extends ServiceImpl<OrderItemMapper, OrderItem> implements OrderItemService {

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * 资料商城服务实现类
+ * 实现资料商品的增删改查功能
  */
 @Service
 public class MaterialServiceImpl extends ServiceImpl<MaterialMapper, Material> implements MaterialService {

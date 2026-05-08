@@ -7,6 +7,7 @@ import java.util.List;
 
 /**
  * 购物车服务接口
+ * 提供购物车商品的增删改查功能
  */
 public interface CartItemService extends IService<CartItem> {
     

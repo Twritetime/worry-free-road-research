@@ -6,6 +6,12 @@
 
     <div class="custom-table-wrapper">
       <el-table :data="feedbackList" style="width: 100%" v-loading="loading" :header-cell-style="{background:'#f5f7fa', color:'#606266'}">
+        <el-table-column prop="type" label="问题类型" width="120" align="center">
+          <template #default="{ row }">
+            <el-tag v-if="row.type" size="small" effect="plain">{{ row.type }}</el-tag>
+            <span v-else style="color: #999">-</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="content" label="反馈内容" min-width="250" show-overflow-tooltip />
         <el-table-column prop="createTime" label="提交时间" width="180" align="center" />
         <el-table-column label="状态" width="120" align="center">

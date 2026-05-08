@@ -20,6 +20,11 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.Map;
 
+/**
+ * 禁用用户守卫切面
+ * 在Controller方法执行前检查用户状态，如果用户被禁用则拦截请求
+ * 防止被禁用的用户继续操作系统
+ */
 @Aspect
 @Component
 public class DisabledUserGuardAspect {
@@ -36,6 +41,11 @@ public class DisabledUserGuardAspect {
     @Autowired
     private OrderService orderService;
 
+    /**
+     * 在Controller方法执行前检查用户状态
+     * 
+     * @param joinPoint 切点信息
+     */
     @Before("within(com.yanluwuyou.controller..*)")
     public void guardDisabledUser(JoinPoint joinPoint) {
         Method method = ((MethodSignature) joinPoint.getSignature()).getMethod();
@@ -52,6 +62,13 @@ public class DisabledUserGuardAspect {
         }
     }
 
+    /**
+     * 从方法参数中解析用户ID
+     * 
+     * @param method 方法对象
+     * @param args 方法参数
+     * @return 用户ID，如果未找到则返回null
+     */
     private Long resolveUserId(Method method, Object[] args) {
         Parameter[] parameters = method.getParameters();
         for (int i = 0; i < parameters.length; i++) {
@@ -71,6 +88,13 @@ public class DisabledUserGuardAspect {
         return null;
     }
 
+    /**
+     * 从资源对象中解析用户ID（如购物车项、地址、订单等）
+     * 
+     * @param method 方法对象
+     * @param args 方法参数
+     * @return 用户ID，如果未找到则返回null
+     */
     private Long resolveUserIdFromResource(Method method, Object[] args) {
         String className = method.getDeclaringClass().getSimpleName();
         String methodName = method.getName();
@@ -113,6 +137,12 @@ public class DisabledUserGuardAspect {
         return null;
     }
 
+    /**
+     * 判断参数是否为userId请求参数
+     * 
+     * @param parameter 参数对象
+     * @return true-是userId参数, false-不是
+     */
     private boolean isUserIdRequestParam(Parameter parameter) {
         RequestParam requestParam = parameter.getAnnotation(RequestParam.class);
         if (requestParam == null) {
@@ -128,6 +158,12 @@ public class DisabledUserGuardAspect {
         return "userId".equals(name);
     }
 
+    /**
+     * 从参数对象中提取userId
+     * 
+     * @param arg 参数对象
+     * @return 用户ID，如果未找到则返回null
+     */
     private Long extractUserIdFromArg(Object arg) {
         if (arg == null) {
             return null;
@@ -143,6 +179,12 @@ public class DisabledUserGuardAspect {
         }
     }
 
+    /**
+     * 将对象转换为Long类型
+     * 
+     * @param value 待转换的对象
+     * @return Long值，如果转换失败则返回null
+     */
     private Long toLong(Object value) {
         if (value == null) {
             return null;

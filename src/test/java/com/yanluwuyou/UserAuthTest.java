@@ -16,6 +16,10 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * 用户认证功能测试类
+ * 测试用户注册、登录、密码验证等功能
+ */
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class UserAuthTest {

@@ -7,6 +7,7 @@ import java.util.List;
 
 /**
  * AI推荐结果DTO
+ * 封装AI智能推荐的结果数据，包含推荐资料列表和推荐理由
  */
 @Data
 public class AiRecommendDTO {

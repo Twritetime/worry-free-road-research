@@ -72,8 +72,32 @@ const form = reactive({
     content: '',
     category: 1
 })
-const toolbarConfig = {}
-const editorConfig = { placeholder: '请输入帖子详细内容...' }
+const apiBaseUrl = 'http://localhost:8080'
+const uploadUrl = `${apiBaseUrl}/file/upload`
+const toolbarConfig = {
+    excludeKeys: [
+        'group-video'
+    ]
+}
+const editorConfig = {
+    placeholder: '请输入帖子详细内容...',
+    MENU_CONF: {
+        uploadImage: {
+            server: uploadUrl,
+            fieldName: 'file',
+            headers: {
+            },
+            customInsert: (res, insertFn) => {
+                if (res.code === 0 || res.code === 200) {
+                    const url = res.data || res
+                    insertFn(url)
+                } else {
+                    ElMessage.error('图片上传失败')
+                }
+            }
+        }
+    }
+}
 
 // 组件销毁时，也及时销毁编辑器
 onBeforeUnmount(() => {

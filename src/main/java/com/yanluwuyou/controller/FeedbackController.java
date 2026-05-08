@@ -20,6 +20,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * 用户反馈控制器
+ * 提供反馈提交、查询、回复等功能
+ */
 @RestController
 @RequestMapping("/feedback")
 @RequireLogin

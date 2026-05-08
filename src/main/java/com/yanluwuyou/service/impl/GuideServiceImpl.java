@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 /**
  * 报考指南服务实现类
+ * 实现指南的增删改查及院校、专业筛选功能
  */
 @Service
 public class GuideServiceImpl extends ServiceImpl<GuideMapper, Guide> implements GuideService {

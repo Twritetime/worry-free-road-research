@@ -38,6 +38,8 @@ import java.util.stream.Collectors;
 
 /**
  * 订单服务实现类
+ * 实现订单创建、支付、查询等电商核心业务逻辑
+ * 支持购物车结算、直接购买、支付宝集成等功能
  */
 @Slf4j
 @Service
@@ -129,15 +131,19 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public List<OrderDTO> getUserOrders(Long userId) {
-        List<Order> orders = this.list(new LambdaQueryWrapper<Order>()
-                .eq(Order::getUserId, userId)
-                .orderByDesc(Order::getCreateTime));
+    public List<OrderDTO> getUserOrders(Long userId, Integer status) {
+        LambdaQueryWrapper<Order> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Order::getUserId, userId);
+        if (status != null) {
+            queryWrapper.eq(Order::getStatus, status);
+        }
+        queryWrapper.orderByDesc(Order::getCreateTime);
+        List<Order> orders = this.list(queryWrapper);
 
         for (Order order : orders) {
             refreshOrderStatus(order);
         }
-        
+
         return orders.stream().map(order -> {
             OrderDTO dto = new OrderDTO();
             BeanUtils.copyProperties(order, dto);

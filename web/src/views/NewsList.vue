@@ -228,10 +228,10 @@ const viewDetail = (id) => {
 
 const getTypeTag = (type) => {
     const map = {
-        '报考': 'primary',
-        '政策': 'warning',
-        '经验': 'success',
-        '复试调剂': 'danger'
+        'notice': 'primary',
+        'policy': 'warning',
+        'activity': 'success',
+        'other': 'info'
     }
     return map[type] || 'primary'
 }

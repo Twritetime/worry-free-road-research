@@ -16,6 +16,10 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+/**
+ * 文件上传控制器
+ * 提供文件上传功能，支持多种文件类型
+ */
 @RestController
 @RequestMapping("/file")
 public class FileController {
@@ -26,6 +30,14 @@ public class FileController {
     @Value("${files.upload.path}")
     private String fileUploadPath;
 
+    /**
+     * 上传文件
+     * 使用UUID重命名文件避免冲突
+     * 
+     * @param file 上传的文件
+     * @return 文件访问URL
+     * @throws IOException 文件操作异常
+     */
     @PostMapping(value = "/upload", consumes = "multipart/form-data")
     public Result<String> upload(@RequestParam("file") MultipartFile file) throws IOException {
         String originalFilename = file.getOriginalFilename();

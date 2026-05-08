@@ -4,11 +4,15 @@ import lombok.Data;
 import java.util.List;
 
 /**
- * 创建订单DTO
+ * 创建订单请求DTO
+ * 用于接收前端传递的订单创建信息，支持购物车批量下单和直接购买两种方式
  */
 @Data
 public class OrderCreateDTO {
     
+    /**
+     * 用户ID
+     */
     private Long userId;
     
     /**

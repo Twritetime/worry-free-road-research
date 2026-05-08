@@ -7,6 +7,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+/**
+ * 应用启动测试类
+ * 验证Spring Boot上下文加载是否正常
+ */
 @SpringBootTest
 class YanLuWuYouApplicationTests {
 

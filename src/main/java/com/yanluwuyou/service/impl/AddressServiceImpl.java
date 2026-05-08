@@ -8,6 +8,10 @@ import com.yanluwuyou.service.AddressService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 收货地址服务实现类
+ * 实现地址的增删改查及默认地址设置功能
+ */
 @Service
 public class AddressServiceImpl extends ServiceImpl<AddressMapper, Address> implements AddressService {
 

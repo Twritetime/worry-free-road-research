@@ -70,9 +70,9 @@ public class OrderController {
      */
     @GetMapping("/list")
     @RequireLogin
-    public Result<List<OrderDTO>> list(@RequestParam Long userId) {
+    public Result<List<OrderDTO>> list(@RequestParam Long userId, @RequestParam(required = false) Integer status) {
         AuthGuard.assertOwnerOrAdmin(userId);
-        return Result.success(orderService.getUserOrders(userId));
+        return Result.success(orderService.getUserOrders(userId, status));
     }
 
     /**

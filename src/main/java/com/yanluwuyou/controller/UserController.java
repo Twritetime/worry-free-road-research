@@ -20,6 +20,8 @@ import java.time.LocalDateTime;
 
 /**
  * 用户控制器
+ * 提供用户注册、登录、信息管理等REST API接口
+ * 基础路径: /user
  */
 @RestController
 @RequestMapping("/user")
@@ -32,7 +34,10 @@ public class UserController {
     private TokenService tokenService;
 
     /**
-     * 注册
+     * 用户注册接口
+     * 
+     * @param userRegisterDTO 注册信息（用户名、密码、昵称等）
+     * @return 注册成功的用户信息
      */
     @PostMapping("/register")
     public Result<User> register(@RequestBody UserRegisterDTO userRegisterDTO) {
@@ -40,7 +45,11 @@ public class UserController {
     }
 
     /**
-     * 登录
+     * 用户登录接口
+     * 验证成功后返回用户信息和JWT Token
+     * 
+     * @param userLoginDTO 登录信息（用户名和密码）
+     * @return 用户信息（包含token字段）
      */
     @PostMapping("/login")
     public Result<User> login(@RequestBody UserLoginDTO userLoginDTO) {
@@ -50,7 +59,11 @@ public class UserController {
     }
 
     /**
-     * 获取用户信息
+     * 获取用户详情（需登录）
+     * 仅允许查看自己的信息或管理员查看他人信息
+     * 
+     * @param id 用户ID
+     * @return 用户详细信息（密码已置空）
      */
     @GetMapping("/{id}")
     @RequireLogin
@@ -64,15 +77,18 @@ public class UserController {
     }
 
     /**
-     * 更新用户信息
+     * 更新用户信息（需登录）
+     * 仅允许修改自己的信息，不允许修改用户名和密码
+     * 
+     * @param user 待更新的用户信息
+     * @return 更新后的用户信息
      */
     @PutMapping
     @RequireLogin
     public Result<?> update(@RequestBody User user) {
         AuthGuard.assertOwnerOrAdmin(user.getId());
-        // 防止修改密码
         user.setPassword(null);
-        user.setUsername(null); // 用户名也不允许修改
+        user.setUsername(null); 
         userService.updateById(user);
         return Result.success(userService.getById(user.getId()));
     }

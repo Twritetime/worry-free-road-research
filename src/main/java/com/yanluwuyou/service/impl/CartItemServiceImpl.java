@@ -14,6 +14,7 @@ import java.util.List;
 
 /**
  * 购物车服务实现类
+ * 实现购物车商品的增删改查功能，支持关联商品信息查询
  */
 @Service
 public class CartItemServiceImpl extends ServiceImpl<CartItemMapper, CartItem> implements CartItemService {

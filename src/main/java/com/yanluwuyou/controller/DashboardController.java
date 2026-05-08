@@ -16,6 +16,10 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * 管理后台数据看板控制器
+ * 提供统计数据、销售趋势、用户增长、热门内容等数据分析接口
+ */
 @RestController
 @RequestMapping("/dashboard")
 @RequireRoles({User.ROLE_ADMIN, User.ROLE_OPERATOR})

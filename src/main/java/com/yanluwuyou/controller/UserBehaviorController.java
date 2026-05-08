@@ -10,6 +10,10 @@ import com.yanluwuyou.service.UserBehaviorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * 用户行为记录控制器
+ * 记录用户的浏览、收藏、购买等行为，用于推荐系统
+ */
 @RestController
 @RequestMapping("/behavior")
 @RequireLogin
@@ -21,6 +25,12 @@ public class UserBehaviorController {
     @Autowired
     private MaterialService materialService;
 
+    /**
+     * 记录用户行为
+     * 
+     * @param behavior 行为信息（行为类型、目标类型、目标ID等）
+     * @return 操作结果
+     */
     @PostMapping("/record")
     public Result<?> recordBehavior(@RequestBody UserBehavior behavior) {
         Long userId = AuthGuard.currentUserId();
@@ -43,6 +53,11 @@ public class UserBehaviorController {
         return Result.success();
     }
 
+    /**
+     * 获取行为类型字典
+     * 
+     * @return 行为类型映射表
+     */
     @GetMapping("/types")
     public Result<?> getBehaviorTypes() {
         return Result.success(java.util.Map.of(

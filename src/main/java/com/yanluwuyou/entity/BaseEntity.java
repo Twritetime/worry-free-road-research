@@ -8,15 +8,32 @@ import lombok.Data;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
+/**
+ * 基础实体类
+ * 所有实体类的父类，提供通用的字段和注解
+ * 包含创建时间、更新时间和逻辑删除标记
+ */
 @Data
 public class BaseEntity implements Serializable {
     
+    /**
+     * 创建时间
+     * 在插入数据时自动填充
+     */
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 
+    /**
+     * 更新时间
+     * 在插入和更新数据时自动填充
+     */
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
 
+    /**
+     * 逻辑删除标记
+     * 0: 未删除, 1: 已删除
+     */
     @TableLogic
     private Integer deleted;
 }

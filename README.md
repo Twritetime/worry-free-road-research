@@ -24,7 +24,6 @@
 | Hutool | 5.8.25 | Java工具类库 |
 | Lombok | 1.18.36 | 代码简化 |
 | Knife4j | 4.3.0 | API文档 |
-| Jsoup | 1.17.2 | HTML内容净化（XSS防护） |
 | 支付宝SDK | 4.16.2 | 支付集成 |
 | Fastjson | 1.2.61 | JSON处理 |
 

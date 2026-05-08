@@ -7,6 +7,11 @@ import com.yanluwuyou.mapper.FavoriteMapper;
 import com.yanluwuyou.service.FavoriteService;
 import org.springframework.stereotype.Service;
 
+/**
+ * 收藏服务实现类
+ * 实现收藏、取消收藏、查询收藏状态等功能
+ * 支持逻辑删除和恢复机制
+ */
 @Service
 public class FavoriteServiceImpl extends ServiceImpl<FavoriteMapper, Favorite> implements FavoriteService {
 
