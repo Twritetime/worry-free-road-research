@@ -2,7 +2,6 @@
   <el-header class="header">
     <div class="header-inner">
       <div class="logo" @click="$router.push('/')">
-        <el-icon class="logo-icon"><School /></el-icon>
         <span class="logo-text">研路无忧</span>
       </div>
       <div class="nav-menu">
@@ -18,7 +17,7 @@
             <span class="el-dropdown-link user-profile">
               <el-avatar :size="32" :src="user.avatar || 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'" />
               <span class="username">{{ user.nickname || user.username }}</span>
-              <el-icon class="el-icon--right"><arrow-down /></el-icon>
+              <el-icon class="el-icon--right"><ArrowDown /></el-icon>
             </span>
             <template #dropdown>
               <el-dropdown-menu>
@@ -44,7 +43,7 @@ import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { storeToRefs } from 'pinia'
-import { School, ArrowDown } from '@element-plus/icons-vue'
+import { ArrowDown } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const route = useRoute()

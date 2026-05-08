@@ -24,6 +24,7 @@ import GuideManage from '../views/admin/GuideManage.vue'
 import ForumManage from '../views/admin/ForumManage.vue'
 import OrderManage from '../views/admin/OrderManage.vue'
 import AiChatManage from '../views/admin/AiChatManage.vue'
+import HomeConfigManage from '../views/admin/HomeConfigManage.vue'
 import { useUserStore } from '@/stores/user'
 import { getUserInfo } from '@/api/user'
 import { ElMessage } from 'element-plus'
@@ -61,7 +62,8 @@ const routes = [
       { path: 'forum', name: 'AdminForum', component: ForumManage },
       { path: 'orders', name: 'AdminOrders', component: OrderManage },
       { path: 'feedbacks', name: 'AdminFeedbacks', component: FeedbackList },
-      { path: 'ai-chat', name: 'AdminAiChat', component: AiChatManage }
+      { path: 'ai-chat', name: 'AdminAiChat', component: AiChatManage },
+      { path: 'home-config', name: 'AdminHomeConfig', component: HomeConfigManage }
     ]
   }
 ]

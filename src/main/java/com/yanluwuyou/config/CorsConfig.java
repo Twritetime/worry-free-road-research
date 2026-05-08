@@ -1,28 +1,39 @@
 package com.yanluwuyou.config;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
 
 /**
- * 跨域资源共享（CORS）配置类
- * 允许前端应用跨域访问后端API接口
+ * CORS跨域配置
  */
 @Configuration
-public class CorsConfig implements WebMvcConfigurer {
+public class CorsConfig {
 
-    /**
-     * 配置跨域映射规则
-     * 
-     * @param registry 跨域注册器
-     */
-    @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**")
-                .allowedOriginPatterns("*")
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowedHeaders("*")
-                .allowCredentials(true)
-                .maxAge(3600);
+    @Bean
+    public CorsFilter corsFilter() {
+        CorsConfiguration config = new CorsConfiguration();
+        
+        // 允许所有来源
+        config.addAllowedOriginPattern("*");
+        
+        // 允许所有请求头
+        config.addAllowedHeader("*");
+        
+        // 允许所有HTTP方法
+        config.addAllowedMethod("*");
+        
+        // 允许携带凭证
+        config.setAllowCredentials(true);
+        
+        // 预检请求缓存时间（秒）
+        config.setMaxAge(3600L);
+        
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        
+        return new CorsFilter(source);
     }
 }

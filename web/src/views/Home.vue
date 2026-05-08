@@ -1,6 +1,6 @@
 <template>
   <div class="home-container">
-      <!-- Hero Section -->
+      <!-- Hero Section - Title at the top -->
       <section class="hero-section">
         <div class="hero-content">
             <h1 class="hero-title">研路无忧，一站式考研服务平台</h1>
@@ -13,265 +13,325 @@
                     查看指南
                 </el-button>
             </div>
-            
-            <div class="hero-stats">
-                <div class="stat-item">
-                    <span class="stat-num">10k+</span>
-                    <span class="stat-label">资料下载</span>
-                </div>
-                <div class="stat-divider"></div>
-                <div class="stat-item">
-                    <span class="stat-num">5k+</span>
-                    <span class="stat-label">活跃用户</span>
-                </div>
-                <div class="stat-divider"></div>
-                <div class="stat-item">
-                    <span class="stat-num">98%</span>
-                    <span class="stat-label">好评率</span>
-                </div>
-            </div>
         </div>
-        <div class="hero-image">
-            <!-- Decorative elements representing study/success -->
-            <div class="floating-card card-1">
-                <el-icon><Document /></el-icon>
-                <span>真题资料</span>
-            </div>
-            <div class="floating-card card-2">
-                <el-icon><ChatDotRound /></el-icon>
-                <span>经验交流</span>
-            </div>
-            <div class="floating-card card-3">
-                <el-icon><Trophy /></el-icon>
-                <span>成功上岸</span>
-            </div>
-            <div class="hero-bg-circle"></div>
-        </div>
-      </section>
+    </section>
 
-      <div class="content-wrapper">
-        <el-row :gutter="40">
-            <!-- Left Column: News -->
-            <el-col :xs="24" :lg="16">
-                <div class="section-header">
-                    <h2 class="section-title">最新资讯</h2>
-                    <div class="header-actions">
-                        <el-button v-if="isFrontAdmin" type="primary" link @click="handleAddNews">发布资讯</el-button>
-                        <el-button link @click="$router.push('/news')">查看更多 <el-icon><ArrowRight /></el-icon></el-button>
-                    </div>
-                </div>
-                
-                <div class="news-list" v-loading="loading">
-                    <div v-for="item in newsList" :key="item.id" class="news-card" @click="viewNews(item.id)">
-                        <div class="news-content">
-                            <div class="news-badges">
-                                <el-tag size="small" :type="getTypeTag(item.type)" effect="plain" round>{{ getTypeLabel(item.type) }}</el-tag>
-                                <span class="news-date">{{ formatDate(item.createTime) }}</span>
-                            </div>
-                            <h3 class="news-title">{{ item.title }}</h3>
-                            <p class="news-excerpt">{{ stripHtml(item.content).substring(0, 100) }}...</p>
-                        </div>
-                        <div v-if="isFrontAdmin" class="admin-actions" @click.stop>
-                            <el-button circle size="small" @click="handleEditNews(item)"><el-icon><Edit /></el-icon></el-button>
-                            <el-button circle size="small" type="danger" @click="handleDeleteNews(item)"><el-icon><Delete /></el-icon></el-button>
-                        </div>
-                    </div>
-                    <el-empty v-if="!loading && newsList.length === 0" description="暂无资讯"></el-empty>
-                </div>
-            </el-col>
-            
-            <!-- Right Column: Ranking & Quick Links -->
-            <el-col :xs="24" :lg="8">
-                <div class="sidebar-section">
-                    <h3 class="sidebar-title">热门推荐</h3>
-                    <div class="ranking-list">
-                        <div v-for="(item, index) in hotRecommendations" :key="item.id" class="ranking-item" @click="viewNews(item.id)">
-                            <span class="rank-num" :class="'rank-' + (index + 1)">{{ index + 1 }}</span>
-                            <div class="rank-info">
-                                <span class="rank-title">{{ item.title }}</span>
-                                <span class="rank-heat">🔥 {{ item.hot }} 热度</span>
-                            </div>
-                        </div>
-                        <el-empty v-if="!loading && hotRecommendations.length === 0" description="暂无热门推荐"></el-empty>
-                    </div>
-                </div>
-
-                <div class="sidebar-section" style="margin-top: 30px;">
-                    <h3 class="sidebar-title">快速通道</h3>
-                    <div class="quick-links">
-                        <div class="quick-link-item" @click="$router.push('/materials?category=public')">
-                            <div class="icon-box public"><el-icon><Collection /></el-icon></div>
-                            <span>公共课资料</span>
-                        </div>
-                        <div class="quick-link-item" @click="$router.push('/materials?category=major')">
-                            <div class="icon-box major"><el-icon><Reading /></el-icon></div>
-                            <span>专业课资料</span>
-                        </div>
-                        <div class="quick-link-item" @click="$router.push('/materials?category=interview')">
-                            <div class="icon-box interview"><el-icon><Microphone /></el-icon></div>
-                            <span>复试资料</span>
-                        </div>
-                    </div>
-                </div>
-            </el-col>
-        </el-row>
+      <!-- Carousel Section -->
+      <div class="carousel-wrapper">
+        <el-carousel height="400px" indicator-position="bottom" class="home-carousel">
+          <el-carousel-item v-for="item in homeConfigs.banner" :key="item.id" @click="handleBannerClick(item.linkUrl)">
+            <div class="carousel-item">
+              <img :src="item.imgUrl" :alt="item.title" class="carousel-image" />
+              <div class="carousel-overlay">
+                <h3 class="carousel-title">{{ item.title }}</h3>
+              </div>
+            </div>
+          </el-carousel-item>
+        </el-carousel>
       </div>
 
-      <!-- 资料商城 Section -->
-      <div class="content-wrapper" v-if="materialList.length > 0">
-        <div class="section-header">
-            <h2 class="section-title">热门资料</h2>
-            <div class="header-actions">
-                <el-button v-if="isFrontAdmin" type="primary" link @click="$router.push('/materials')">管理资料</el-button>
-                <el-button link @click="$router.push('/materials')">查看更多 <el-icon><ArrowRight /></el-icon></el-button>
-            </div>
+      <!-- Notice Section -->
+      <div class="notice-wrapper">
+        <div class="notice-header">
+          <div class="notice-icon">
+            <el-icon class="bell-icon"><Bell /></el-icon>
+            <span class="notice-title">通知公告</span>
+          </div>
+          <button class="notice-more" @click="$router.push('/news')">
+            更多 <el-icon><ArrowRight /></el-icon>
+          </button>
         </div>
-        <div class="material-grid">
-            <div v-for="item in materialList" :key="item.id" class="material-card" @click="$router.push(`/materials/${item.id}`)">
-                <div class="material-image">
-                    <el-image :src="item.coverImg || 'https://placehold.co/300x200?text=Material'" fit="cover" class="material-img" />
-                    <span v-if="item.fileFormat" class="format-badge">{{ item.fileFormat }}</span>
-                </div>
-                <div class="material-info">
-                    <h4 class="material-name">{{ item.name }}</h4>
-                    <div class="material-meta">
-                        <span class="material-price">¥{{ item.price }}</span>
-                        <span v-if="item.originalPrice && item.originalPrice > item.price" class="material-origin">¥{{ item.originalPrice }}</span>
-                    </div>
-                </div>
-            </div>
+        <div class="notice-list">
+          <div v-for="item in homeConfigs.notice.slice(0, 4)" :key="item.id" class="notice-item" @click="handleNoticeClick(item.linkUrl)">
+            <span class="notice-dot"></span>
+            <span class="notice-text">{{ item.title }}</span>
+          </div>
         </div>
       </div>
 
-      <!-- 报考指南 Section -->
-      <div class="content-wrapper" v-if="guideList.length > 0">
-        <div class="section-header">
-            <h2 class="section-title">报考指南</h2>
-            <div class="header-actions">
-                <el-button v-if="isFrontAdmin" type="primary" link @click="$router.push('/guides')">管理指南</el-button>
-                <el-button link @click="$router.push('/guides')">查看更多 <el-icon><ArrowRight /></el-icon></el-button>
+    <!-- Quick Access Section -->
+    <section class="quick-access">
+        <div class="content-wrapper">
+            <div class="access-grid">
+                <div class="access-item" @click="$router.push('/materials')">
+                    <div class="access-icon-wrapper">
+                        <el-icon class="access-icon"><Document /></el-icon>
+                    </div>
+                    <span class="access-text">资料商城</span>
+                </div>
+                <div class="access-item" @click="$router.push('/guides')">
+                    <div class="access-icon-wrapper blue">
+                        <el-icon class="access-icon"><Document /></el-icon>
+                    </div>
+                    <span class="access-text">报考指南</span>
+                </div>
+                <div class="access-item" @click="$router.push('/forum')">
+                    <div class="access-icon-wrapper green">
+                        <el-icon class="access-icon"><ChatDotRound /></el-icon>
+                    </div>
+                    <span class="access-text">交流论坛</span>
+                </div>
+                <div class="access-item" @click="$router.push('/news')">
+                    <div class="access-icon-wrapper orange">
+                        <el-icon class="access-icon"><Trophy /></el-icon>
+                    </div>
+                    <span class="access-text">考研资讯</span>
+                </div>
             </div>
         </div>
-        <div class="guide-grid">
-            <div v-for="item in guideList" :key="item.id" class="guide-card" @click="$router.push(`/guides/${item.id}`)">
-                <div class="guide-icon">
-                    <el-icon><Document /></el-icon>
-                </div>
-                <div class="guide-content">
-                    <h4 class="guide-title">{{ item.title }}</h4>
-                    <p class="guide-meta">{{ item.institution || '未知院校' }} · {{ item.major || '未知专业' }}</p>
-                    <el-tag v-if="item.category" size="small">{{ getGuideCategoryLabel(item.category) }}</el-tag>
-                </div>
-            </div>
-        </div>
-      </div>
+    </section>
 
-      <!-- 交流论坛 Section -->
-      <div class="content-wrapper" v-if="postList.length > 0">
-        <div class="section-header">
-            <h2 class="section-title">热门帖子</h2>
-            <div class="header-actions">
-                <el-button v-if="isFrontAdmin" type="primary" link @click="$router.push('/forum')">管理帖子</el-button>
-                <el-button link @click="$router.push('/forum')">查看更多 <el-icon><ArrowRight /></el-icon></el-button>
+    <!-- News Section -->
+    <section class="news-section">
+        <div class="content-wrapper">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <el-icon class="section-icon"><Reading /></el-icon>
+                    最新资讯
+                </h2>
+                <button class="view-more" @click="$router.push('/news')">
+                    查看更多 <el-icon><ArrowRight /></el-icon>
+                </button>
             </div>
-        </div>
-        <div class="forum-list">
-            <div v-for="item in postList" :key="item.id" class="forum-card" @click="handlePostClick(item.id)">
-                <div class="forum-content">
-                    <h4 class="forum-title">{{ item.title }}</h4>
-                    <div class="forum-meta">
-                        <span class="forum-author">{{ item.authorName || item.author || '匿名用户' }}</span>
-                        <span class="forum-time">{{ formatDate(item.createTime) }}</span>
+            <div class="news-grid">
+                <div 
+                    v-for="news in newsList.slice(0, 6)" 
+                    :key="news.id" 
+                    class="news-card"
+                    @click="$router.push(`/news/${news.id}`)"
+                >
+                    <div class="news-image-wrapper">
+                        <img :src="news.coverImage || 'https://picsum.photos/400/200?random=' + news.id" alt="" class="news-image" />
+                    </div>
+                    <div class="news-content">
+                        <span class="news-tag">{{ getNewsTypeLabel(news.type) }}</span>
+                        <h3 class="news-title">{{ news.title }}</h3>
+                        <p class="news-summary">{{ stripHtml(news.content)?.slice(0, 100) }}...</p>
+                        <div class="news-meta">
+                            <span class="news-time">{{ news.createTime }}</span>
+                            <span class="news-views">阅读 {{ news.viewCount || 0 }}</span>
+                        </div>
                     </div>
                 </div>
-                <div class="forum-stats">
-                    <span><el-icon><ChatLineSquare /></el-icon> {{ item.commentCount || 0 }}</span>
-                    <span>👍 {{ item.likeCount || 0 }}</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Materials Section -->
+    <section class="materials-section">
+        <div class="content-wrapper">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <el-icon class="section-icon"><Folder /></el-icon>
+                    热门资料
+                </h2>
+                <button class="view-more" @click="$router.push('/materials')">
+                    查看更多 <el-icon><ArrowRight /></el-icon>
+                </button>
+            </div>
+            <div class="materials-grid">
+                <div 
+                    v-for="material in materialList.slice(0, 4)" 
+                    :key="material.id" 
+                    class="material-card"
+                    @click="$router.push(`/materials/${material.id}`)"
+                >
+                    <div class="material-image-wrapper">
+                        <img :src="material.coverImage || 'https://picsum.photos/300/200?random=' + material.id" alt="" class="material-image" />
+                        <div class="material-price">
+                            <span v-if="material.price === 0" class="free-badge">免费</span>
+                            <span v-else class="price-text">¥{{ material.price }}</span>
+                        </div>
+                    </div>
+                    <div class="material-content">
+                        <span class="material-tag">{{ getCategoryLabel(material.category) }}</span>
+                        <h3 class="material-title">{{ material.title }}</h3>
+                        <p class="material-summary">{{ stripHtml(material.description)?.slice(0, 60) }}...</p>
+                        <div class="material-meta">
+                            <span class="material-downloads">下载 {{ material.downloadCount || 0 }}</span>
+                            <span class="material-favorites">收藏 {{ material.favoriteCount || 0 }}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-      </div>
+    </section>
 
-        <!-- Dialogs remain similar but with better styling classes if needed -->
-        <el-dialog :title="formTitle" v-model="dialogVisible" width="600px" class="custom-dialog">
-            <el-form :model="newsForm" label-width="80px" label-position="top">
-                <el-form-item label="标题">
-                    <el-input v-model="newsForm.title" placeholder="请输入资讯标题"></el-input>
-                </el-form-item>
-                <el-form-item label="类型">
-                    <el-select v-model="newsForm.type" style="width: 100%">
-                        <el-option v-for="item in NEWS_TYPE_OPTIONS" :key="item.value" :label="item.label" :value="item.value"></el-option>
-                    </el-select>
-                </el-form-item>
-                <el-form-item label="内容">
-                    <el-input type="textarea" v-model="newsForm.content" :rows="8" placeholder="请输入内容..."></el-input>
-                </el-form-item>
-            </el-form>
-            <template #footer>
-                <el-button @click="dialogVisible = false">取消</el-button>
-                <el-button type="primary" @click="handleSubmit">确定</el-button>
-            </template>
-        </el-dialog>
+    <!-- Guides Section -->
+    <section class="guides-section">
+        <div class="content-wrapper">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <el-icon class="section-icon"><Document /></el-icon>
+                    报考指南
+                </h2>
+                <button class="view-more" @click="$router.push('/guides')">
+                    查看更多 <el-icon><ArrowRight /></el-icon>
+                </button>
+            </div>
+            <div class="guides-grid">
+                <div 
+                    v-for="guide in guideList.slice(0, 4)" 
+                    :key="guide.id" 
+                    class="guide-card"
+                    @click="$router.push(`/guides/${guide.id}`)"
+                >
+                    <div class="guide-icon-wrapper">
+                        <el-icon class="guide-icon"><Document /></el-icon>
+                    </div>
+                    <div class="guide-content">
+                        <span class="guide-tag">{{ getGuideCategoryLabel(guide.category) }}</span>
+                        <h3 class="guide-title">{{ guide.title }}</h3>
+                        <p class="guide-summary">{{ stripHtml(guide.content)?.slice(0, 80) }}...</p>
+                        <div class="guide-meta">
+                            <span class="guide-views">阅读 {{ guide.viewCount || 0 }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Forum Section -->
+    <section class="forum-section">
+        <div class="content-wrapper">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <el-icon class="section-icon"><ChatLineSquare /></el-icon>
+                    交流论坛
+                </h2>
+                <button class="view-more" @click="$router.push('/forum')">
+                    查看更多 <el-icon><ArrowRight /></el-icon>
+                </button>
+            </div>
+            <div class="forum-list">
+                <div 
+                    v-for="post in postList.slice(0, 5)" 
+                    :key="post.id" 
+                    class="forum-item"
+                    @click="handlePostClick(post.id)"
+                >
+                    <div class="forum-avatar">
+                        <el-avatar :size="48" :src="post.userAvatar || 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'" />
+                    </div>
+                    <div class="forum-content">
+                        <div class="forum-title-row">
+                            <span class="forum-title">{{ post.title }}</span>
+                            <span class="forum-tag" v-if="post.tag">{{ post.tag }}</span>
+                        </div>
+                        <div class="forum-meta">
+                            <span class="forum-author">{{ post.authorName }}</span>
+                            <span class="forum-time">{{ post.createTime }}</span>
+                            <span class="forum-replies">{{ post.commentCount }} 回复</span>
+                            <span class="forum-views">{{ post.viewCount }} 浏览</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats-section">
+        <div class="content-wrapper">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon blue">
+                        <el-icon><Document /></el-icon>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value">10,000+</span>
+                        <span class="stat-label">考研资料</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green">
+                        <el-icon><User /></el-icon>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value">5,000+</span>
+                        <span class="stat-label">活跃用户</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon purple">
+                        <el-icon><Trophy /></el-icon>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value">98%</span>
+                        <span class="stat-label">好评率</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon orange">
+                        <el-icon><ChatLineSquare /></el-icon>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value">50,000+</span>
+                        <span class="stat-label">交流帖子</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowRight, Document, ChatDotRound, Trophy, Edit, Delete, Collection, Reading, Microphone, Folder, ChatLineSquare } from '@element-plus/icons-vue'
-import { getNewsList, createNews, updateNews, deleteNews } from '@/api/news'
+import { ArrowRight, Document, ChatDotRound, Trophy, Reading, Folder, ChatLineSquare, Bell, User } from '@element-plus/icons-vue'
+import { getNewsList } from '@/api/news'
 import { getMaterialList } from '@/api/material'
 import { getGuideList } from '@/api/guide'
 import { getPostList } from '@/api/post'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { getHomeConfigs } from '@/api/homeConfig'
+import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import { storeToRefs } from 'pinia'
 
 const router = useRouter()
 const userStore = useUserStore()
-const { isFrontAdmin, user } = storeToRefs(userStore)
+const { user } = storeToRefs(userStore)
 
 const newsList = ref([])
 const materialList = ref([])
 const guideList = ref([])
 const postList = ref([])
-const loading = ref(false)
-const dialogVisible = ref(false)
-const newsForm = ref({})
-const formTitle = ref('发布资讯')
-const NEWS_TYPE_OPTIONS = [
-    { label: '报考指南', value: 'notice' },
-    { label: '政策解读', value: 'policy' },
-    { label: '备考活动', value: 'activity' },
-    { label: '其他资讯', value: 'other' }
-]
-const NEWS_TYPE_LABEL_MAP = NEWS_TYPE_OPTIONS.reduce((map, item) => {
-    map[item.value] = item.label
-    return map
-}, {})
-const hotRecommendations = computed(() =>
-    (newsList.value || []).slice(0, 5).map((item, index) => ({
-        ...item,
-        hot: item.viewCount || Math.max(900 - index * 80, 500)
-    }))
-)
+
+const homeConfigs = ref({
+    banner: [
+        { id: 1, type: 'banner', title: '2026考研招生简章发布', imgUrl: 'https://picsum.photos/seed/home1/800/400', linkUrl: '/guides', sortOrder: 1, status: 1 },
+        { id: 2, type: 'banner', title: '名师直播：考研政治冲刺押题', imgUrl: 'https://picsum.photos/seed/home2/800/400', linkUrl: '/news', sortOrder: 2, status: 1 },
+        { id: 3, type: 'banner', title: '限时优惠：全套考研资料包', imgUrl: 'https://picsum.photos/seed/home3/800/400', linkUrl: '/materials', sortOrder: 3, status: 1 },
+        { id: 4, type: 'banner', title: '复试通关秘籍免费领', imgUrl: 'https://picsum.photos/seed/home4/800/400', linkUrl: '/guides', sortOrder: 4, status: 1 },
+        { id: 5, type: 'banner', title: '考研院校数据库上线', imgUrl: 'https://picsum.photos/seed/home5/800/400', linkUrl: '/materials', sortOrder: 5, status: 1 }
+    ],
+    notice: [
+        { id: 1, type: 'notice', title: '2026年考研初试时间确定：12月20-21日', linkUrl: '/news', sortOrder: 1, status: 1 },
+        { id: 2, type: 'notice', title: '推免服务系统9月28日开放', linkUrl: '/news', sortOrder: 2, status: 1 },
+        { id: 3, type: 'notice', title: '网上报名时间：10月8日至25日', linkUrl: '/news', sortOrder: 3, status: 1 },
+        { id: 4, type: 'notice', title: '少数民族骨干计划招生简章发布', linkUrl: '/news', sortOrder: 4, status: 1 },
+        { id: 5, type: 'notice', title: '退役大学生士兵专项计划说明', linkUrl: '/news', sortOrder: 5, status: 1 }
+    ],
+    hot: [],
+    recommend: []
+})
 
 onMounted(() => {
     fetchNews()
     fetchMaterials()
     fetchGuides()
     fetchPosts()
+    fetchHomeConfigs()
 })
 
 const fetchNews = async () => {
-    loading.value = true
     try {
         const res = await getNewsList({ pageNum: 1, pageSize: 6 })
         newsList.value = res.records || []
     } catch (error) {
         console.error(error)
-    } finally {
-        loading.value = false
     }
 }
 
@@ -302,44 +362,78 @@ const fetchPosts = async () => {
     }
 }
 
+const fetchHomeConfigs = async () => {
+    try {
+        const res = await getHomeConfigs()
+        if (res && Object.keys(res).length > 0) {
+            homeConfigs.value = { ...homeConfigs.value, ...res }
+        }
+    } catch (error) {
+        console.error('Error fetching home configs:', error)
+    }
+}
+
 const handlePostClick = (id) => {
     if (!user.value?.id) {
         ElMessage.warning('请先登录')
         router.push('/login')
         return
     }
-    router.push(`/forum/${id}`)
+    router.push(`/posts/${id}`)
 }
 
-const viewNews = (id) => {
-    router.push(`/news/${id}`)
-}
-
-const getTypeTag = (type) => {
-    const map = {
-        '报考': 'primary',
-        '政策': 'warning',
-        '经验': 'success',
-        '复试调剂': 'danger'
+const handleBannerClick = (linkUrl) => {
+    if (linkUrl) {
+        router.push(linkUrl)
     }
-    return map[type] || 'info'
 }
 
-const getTypeLabel = (type) => {
-    return NEWS_TYPE_LABEL_MAP[type] || type
+const handleNoticeClick = (linkUrl) => {
+    if (linkUrl) {
+        router.push(linkUrl)
+    }
 }
 
-const formatDate = (dateStr) => {
-    if (!dateStr) return ''
-    return dateStr.split(' ')[0]
+const getNewsTypeLabel = (type) => {
+    const map = {
+        'notice': '报考指南',
+        'policy': '政策解读',
+        'activity': '备考活动',
+        'other': '其他资讯'
+    }
+    return map[type] || type
+}
+
+const getCategoryLabel = (category) => {
+    const map = {
+        'kaoyanzhenti': '考研真题',
+        'kaoshidagang': '考试大纲',
+        'fudaoziliao': '辅导资料',
+        'zhaoshengjianzhang': '招生简章',
+        'fushixize': '复试细则',
+        'xuewei': '学位信息',
+        'public': '公共课',
+        'major': '专业课',
+        'english': '英语',
+        'math': '数学',
+        'politics': '政治',
+        'professional': '专业课'
+    }
+    return map[category] || category
 }
 
 const getGuideCategoryLabel = (category) => {
     const map = {
-        'zhaoshengjianzhang': '招生简章',
+        'kaoyanzhinan': '考研指南',
+        'zhuanye': '专业选择',
+        'yuanxiaofenxi': '院校分析',
+        'fushi': '复试指导',
+        'baoming': '报名流程',
+        'fushixize': '复试细则',
         'zhuanyemulu': '专业目录',
-        'kaoshidagang': '考试大纲',
-        'fushixize': '复试细则'
+        'zhaoshengjianzhang': '招生简章',
+        'kaoyan': '考研',
+        'beikao': '备考'
     }
     return map[category] || category
 }
@@ -348,47 +442,6 @@ const stripHtml = (html) => {
    let tmp = document.createElement("DIV");
    tmp.innerHTML = html;
    return tmp.textContent || tmp.innerText || "";
-}
-
-const handleAddNews = () => {
-    newsForm.value = { type: NEWS_TYPE_OPTIONS[0].value, status: 1 }
-    formTitle.value = '发布资讯'
-    dialogVisible.value = true
-}
-
-const handleEditNews = (item) => {
-    newsForm.value = { ...item }
-    formTitle.value = '编辑资讯'
-    dialogVisible.value = true
-}
-
-const handleDeleteNews = (item) => {
-    ElMessageBox.confirm('确认删除该资讯吗?', '提示', { type: 'warning' })
-    .then(async () => {
-        await deleteNews(item.id)
-        ElMessage.success('删除成功')
-        fetchNews()
-    })
-}
-
-const handleSubmit = async () => {
-    if (!newsForm.value.title || !newsForm.value.content) {
-        ElMessage.warning('请填写完整信息')
-        return
-    }
-    try {
-        if (newsForm.value.id) {
-            await updateNews(newsForm.value)
-            ElMessage.success('更新成功')
-        } else {
-            await createNews(newsForm.value)
-            ElMessage.success('发布成功')
-        }
-        dialogVisible.value = false
-        fetchNews()
-    } catch (error) {
-        ElMessage.error('操作失败')
-    }
 }
 </script>
 
@@ -401,149 +454,236 @@ const handleSubmit = async () => {
         linear-gradient(180deg, #f8fbff 0%, #eef6ff 35%, #f4f8ff 100%);
 }
 
-.content-wrapper {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 20px 60px;
+.carousel-wrapper {
+    max-width: 1400px;
+    margin: -20px auto 0;
+    padding: 0 20px;
+}
+
+.home-carousel {
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+}
+
+.carousel-item {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+.carousel-image {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+}
+
+.carousel-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(transparent, rgba(0,0,0,0.6));
+    padding: 40px 30px;
+}
+
+.carousel-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: white;
+    margin: 0;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+.notice-wrapper {
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
+    padding: 20px;
+    margin: 20px auto;
+    max-width: 1400px;
+    border-radius: 16px;
+}
+
+.notice-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.notice-icon {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.bell-icon {
+    color: #fbbf24;
+    font-size: 20px;
+}
+
+.notice-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+}
+
+.notice-more {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,0.8);
+    font-size: 14px;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.notice-more:hover {
+    color: white;
+}
+
+.notice-list {
+    display: flex;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.notice-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.notice-item:hover {
+    transform: translateX(4px);
+}
+
+.notice-dot {
+    width: 6px;
+    height: 6px;
+    background: #fbbf24;
+    border-radius: 50%;
+}
+
+.notice-text {
+    font-size: 14px;
+    color: rgba(255,255,255,0.9);
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .hero-section {
-    background: linear-gradient(135deg, rgba(255,255,255,0.88) 0%, rgba(238,246,255,0.9) 100%);
-    backdrop-filter: blur(6px);
-    padding: 80px 0;
-    margin-bottom: 60px;
-    border-radius: 0 0 40px 40px;
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    justify-content: center;
-}
-
-.hero-content {
-    max-width: 1200px;
-    width: 100%;
-    padding: 0 20px;
-    position: relative;
-    z-index: 2;
+    padding: 60px 20px;
     text-align: center;
 }
 
+.hero-content {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
 .hero-title {
-    font-size: 48px;
-    font-weight: 800;
-    color: #0f172a;
-    margin-bottom: 24px;
-    letter-spacing: -1px;
+    font-size: 40px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 16px;
 }
 
 .hero-subtitle {
-    font-size: 20px;
+    font-size: 16px;
     color: #64748b;
-    margin-bottom: 40px;
-    max-width: 700px;
-    margin-left: auto;
-    margin-right: auto;
+    margin-bottom: 32px;
 }
 
 .hero-actions {
     display: flex;
+    gap: 16px;
     justify-content: center;
-    gap: 20px;
-    margin-bottom: 60px;
 }
 
 .cta-btn {
     padding: 12px 32px;
-    font-weight: 600;
     font-size: 16px;
-    height: auto;
-    border-radius: 50px;
 }
 
 .secondary-btn {
     padding: 12px 32px;
-    font-weight: 600;
     font-size: 16px;
-    height: auto;
-    border-radius: 50px;
     background: white;
-    border: 1px solid #e2e8f0;
-    color: #475569;
-}
-.secondary-btn:hover {
-    border-color: var(--primary-color);
-    color: var(--primary-color);
+    color: #3b82f6;
+    border-color: #3b82f6;
 }
 
-.hero-stats {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 40px;
+.content-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
 }
 
-.stat-item {
+.quick-access {
+    padding: 20px 0;
+}
+
+.access-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+.access-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-}
-
-.stat-num {
-    font-size: 24px;
-    font-weight: 700;
-    color: #0f172a;
-}
-
-.stat-label {
-    font-size: 14px;
-    color: #64748b;
-    margin-top: 4px;
-}
-
-.stat-divider {
-    width: 1px;
-    height: 30px;
-    background-color: #cbd5e1;
-}
-
-/* Floating cards decoration */
-.hero-image {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 1;
-}
-
-.floating-card {
-    position: absolute;
+    padding: 24px;
     background: white;
-    padding: 12px 20px;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.access-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+}
+
+.access-icon-wrapper {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
     display: flex;
     align-items: center;
-    gap: 10px;
-    font-weight: 600;
-    color: #475569;
-    animation: float 6s ease-in-out infinite;
+    justify-content: center;
+    margin-bottom: 12px;
 }
 
-.floating-card .el-icon {
-    font-size: 20px;
-    color: var(--primary-color);
+.access-icon-wrapper.blue {
+    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
 }
 
-.card-1 { top: 20%; left: 10%; animation-delay: 0s; }
-.card-2 { top: 60%; right: 15%; animation-delay: 2s; }
-.card-3 { top: 25%; right: 10%; animation-delay: 4s; }
+.access-icon-wrapper.green {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
 
-@keyframes float {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-20px); }
-    100% { transform: translateY(0px); }
+.access-icon-wrapper.orange {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.access-icon {
+    font-size: 28px;
+    color: white;
+}
+
+.access-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: #334155;
 }
 
 .section-header {
@@ -554,191 +694,120 @@ const handleSubmit = async () => {
 }
 
 .section-title {
-    font-size: 24px;
-    font-weight: 700;
-    color: #1e293b;
-    position: relative;
-    padding-left: 16px;
-}
-
-.section-title::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 4px;
-    height: 20px;
-    background-color: var(--primary-color);
-    border-radius: 2px;
-}
-
-.news-list {
     display: flex;
-    flex-direction: column;
-    gap: 16px;
+    align-items: center;
+    gap: 8px;
+    font-size: 24px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.section-icon {
+    color: #3b82f6;
+    font-size: 20px;
+}
+
+.view-more {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: transparent;
+    border: none;
+    color: #64748b;
+    font-size: 14px;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.view-more:hover {
+    color: #3b82f6;
+}
+
+.news-section {
+    padding: 20px 0;
+}
+
+.news-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
 }
 
 .news-card {
     background: white;
     border-radius: 12px;
-    padding: 20px;
-    border: 1px solid #f1f5f9;
-    transition: all 0.3s;
+    overflow: hidden;
     cursor: pointer;
-    position: relative;
+    transition: all 0.3s;
 }
 
 .news-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-    border-color: transparent;
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.1);
 }
 
-.news-badges {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 12px;
+.news-image-wrapper {
+    position: relative;
+    height: 180px;
+    overflow: hidden;
 }
 
-.news-date {
-    font-size: 13px;
-    color: #94a3b8;
+.news-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
-.news-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: #334155;
+.news-content {
+    padding: 16px;
+}
+
+.news-tag {
+    display: inline-block;
+    padding: 4px 12px;
+    background: #dbeafe;
+    color: #1d4ed8;
+    font-size: 12px;
+    border-radius: 20px;
     margin-bottom: 8px;
 }
 
-.news-excerpt {
-    font-size: 14px;
-    color: #64748b;
-    line-height: 1.6;
-}
-
-.sidebar-section {
-    background: white;
-    border-radius: 16px;
-    padding: 24px;
-    border: 1px solid #f1f5f9;
-}
-
-.sidebar-title {
-    font-size: 18px;
-    font-weight: 700;
+.news-title {
+    font-size: 16px;
+    font-weight: 600;
     color: #1e293b;
-    margin-bottom: 20px;
-}
-
-.ranking-item {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 12px 0;
-    border-bottom: 1px solid #f1f5f9;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.ranking-item:hover {
-    transform: translateX(4px);
-}
-
-.ranking-item:last-child {
-    border-bottom: none;
-}
-
-.rank-num {
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    color: #94a3b8;
-    font-size: 14px;
-}
-
-.rank-num.rank-1 { color: #f59e0b; }
-.rank-num.rank-2 { color: #64748b; }
-.rank-num.rank-3 { color: #b45309; }
-
-.rank-info {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.rank-title {
-    font-size: 14px;
-    color: #334155;
-    font-weight: 500;
+    margin-bottom: 8px;
     display: -webkit-box;
-    -webkit-line-clamp: 1;
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
 
-.rank-heat {
+.news-summary {
+    font-size: 14px;
+    color: #64748b;
+    margin-bottom: 12px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.news-meta {
+    display: flex;
+    justify-content: space-between;
     font-size: 12px;
     color: #94a3b8;
 }
 
-.quick-links {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
+.materials-section {
+    padding: 20px 0;
 }
 
-.quick-link-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-.quick-link-item:hover {
-    transform: translateY(-3px);
-}
-
-.icon-box {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-}
-
-.icon-box.public { background: #eff6ff; color: #3b82f6; }
-.icon-box.major { background: #eff6ff; color: #2563eb; }
-.icon-box.interview { background: #dbeafe; color: #1d4ed8; }
-
-.quick-link-item span {
-    font-size: 12px;
-    color: #64748b;
-}
-
-@media (max-width: 768px) {
-    .hero-title { font-size: 32px; }
-    .hero-subtitle { font-size: 16px; }
-    .hero-stats { gap: 20px; }
-    .floating-card { display: none; }
-}
-
-/* 新增模块样式 */
-.material-grid {
+.materials-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 20px;
-    margin-top: 20px;
 }
 
 .material-card {
@@ -746,146 +815,206 @@ const handleSubmit = async () => {
     border-radius: 12px;
     overflow: hidden;
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transition: all 0.3s;
 }
 
 .material-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.1);
 }
 
-.material-image {
+.material-image-wrapper {
     position: relative;
     height: 160px;
     overflow: hidden;
 }
 
-.material-image .material-img {
+.material-image {
     width: 100%;
     height: 100%;
+    object-fit: cover;
 }
 
-.format-badge {
+.material-price {
     position: absolute;
-    top: 8px;
-    right: 8px;
-    background: rgba(0,0,0,0.6);
+    bottom: 8px;
+    left: 8px;
+}
+
+.free-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    background: #10b981;
     color: white;
-    padding: 2px 8px;
-    border-radius: 4px;
     font-size: 12px;
+    font-weight: 500;
+    border-radius: 20px;
 }
 
-.material-info {
-    padding: 12px;
+.price-text {
+    display: inline-block;
+    padding: 4px 12px;
+    background: #ef4444;
+    color: white;
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: 20px;
 }
 
-.material-name {
-    font-size: 14px;
-    font-weight: 600;
-    color: #1f2937;
+.material-content {
+    padding: 16px;
+}
+
+.material-tag {
+    display: inline-block;
+    padding: 4px 12px;
+    background: #d1fae5;
+    color: #059669;
+    font-size: 12px;
+    border-radius: 20px;
     margin-bottom: 8px;
+}
+
+.material-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 8px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+}
+
+.material-summary {
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 12px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .material-meta {
     display: flex;
-    align-items: center;
-    gap: 8px;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #94a3b8;
 }
 
-.material-price {
-    color: #f59e0b;
-    font-weight: 700;
-    font-size: 16px;
+.guides-section {
+    padding: 20px 0;
 }
 
-.material-origin {
-    color: #9ca3af;
-    text-decoration: line-through;
-    font-size: 13px;
-}
-
-.guide-grid {
+.guides-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-    margin-top: 20px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
 }
 
 .guide-card {
+    display: flex;
+    gap: 16px;
+    padding: 20px;
+    background: white;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.guide-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+}
+
+.guide-icon-wrapper {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.guide-icon {
+    font-size: 24px;
+    color: white;
+}
+
+.guide-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.guide-tag {
+    display: inline-block;
+    padding: 4px 10px;
+    background: #ede9fe;
+    color: #7c3aed;
+    font-size: 12px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+    align-self: flex-start;
+}
+
+.guide-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 8px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.guide-summary {
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 8px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex: 1;
+}
+
+.guide-meta {
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.forum-section {
+    padding: 20px 0;
+}
+
+.forum-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.forum-item {
     display: flex;
     gap: 16px;
     padding: 16px;
     background: white;
     border-radius: 12px;
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transition: all 0.3s;
 }
 
-.guide-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-.guide-icon {
-    width: 48px;
-    height: 48px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 24px;
-    flex-shrink: 0;
-}
-
-.guide-content {
-    flex: 1;
-    min-width: 0;
-}
-
-.guide-title {
-    font-size: 15px;
-    font-weight: 600;
-    color: #1f2937;
-    margin-bottom: 6px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.guide-meta {
-    font-size: 13px;
-    color: #6b7280;
-    margin-bottom: 6px;
-}
-
-.forum-list {
-    margin-top: 20px;
-}
-
-.forum-card {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 20px;
-    background: white;
-    border-radius: 10px;
-    margin-bottom: 12px;
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-}
-
-.forum-card:hover {
+.forum-item:hover {
+    background: #f8fafc;
     transform: translateX(4px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.forum-avatar {
+    flex-shrink: 0;
 }
 
 .forum-content {
@@ -893,35 +1022,117 @@ const handleSubmit = async () => {
     min-width: 0;
 }
 
+.forum-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
 .forum-title {
     font-size: 15px;
     font-weight: 500;
-    color: #1f2937;
-    margin-bottom: 6px;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.forum-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    background: #dbeafe;
+    color: #1d4ed8;
+    font-size: 12px;
+    border-radius: 4px;
 }
 
 .forum-meta {
     display: flex;
     gap: 16px;
     font-size: 13px;
-    color: #9ca3af;
+    color: #94a3b8;
 }
 
-.forum-stats {
+.stats-section {
+    padding: 60px 0;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+}
+
+.stat-card {
     display: flex;
-    gap: 16px;
-    color: #6b7280;
-    font-size: 13px;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
 }
 
-.forum-stats span {
+.stat-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
     display: flex;
     align-items: center;
-    gap: 4px;
+    justify-content: center;
+    margin-bottom: 16px;
 }
 
-@media (max-width: 768px) {
-    .material-grid { grid-template-columns: repeat(2, 1fr); }
-    .guide-grid { grid-template-columns: 1fr; }
+.stat-icon.blue {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+}
+
+.stat-icon.green {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+}
+
+.stat-icon.purple {
+    background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+}
+
+.stat-icon.orange {
+    background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
+}
+
+.stat-icon el-icon {
+    font-size: 24px;
+}
+
+.stat-icon.blue el-icon {
+    color: #3b82f6;
+}
+
+.stat-icon.green el-icon {
+    color: #10b981;
+}
+
+.stat-icon.purple el-icon {
+    color: #8b5cf6;
+}
+
+.stat-icon.orange el-icon {
+    color: #f59e0b;
+}
+
+.stat-info {
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: #64748b;
+    margin-top: 4px;
 }
 </style>

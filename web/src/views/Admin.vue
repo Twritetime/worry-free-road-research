@@ -15,6 +15,10 @@
             <el-icon><DataLine /></el-icon>
             <span>数据统计</span>
           </el-menu-item>
+          <el-menu-item index="/admin/home-config" v-if="canManageContent">
+            <el-icon><Grid /></el-icon>
+            <span>首页配置</span>
+          </el-menu-item>
           <el-menu-item index="/admin/users" v-if="canManageUsers">
             <el-icon><User /></el-icon>
             <span>用户管理</span>
@@ -67,7 +71,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { DataLine, User, HomeFilled, Message, Files, Document, Compass, ChatLineSquare, Tickets, Service } from '@element-plus/icons-vue'
+import { DataLine, User, HomeFilled, Message, Files, Document, Compass, ChatLineSquare, Tickets, Service, Grid } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { storeToRefs } from 'pinia'
 

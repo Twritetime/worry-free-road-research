@@ -1,5 +1,6 @@
 package com.yanluwuyou;
 
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
@@ -10,6 +11,7 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
  * 基于 Spring Boot + MyBatis-Plus + Vue 的考研资料分享平台
  */
 @SpringBootApplication
+@MapperScan("com.yanluwuyou.mapper")
 public class YanLuWuYouApplication {
 
     /**
