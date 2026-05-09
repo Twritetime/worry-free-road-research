@@ -92,6 +92,7 @@
               :on-success="handleUploadSuccess"
               :on-error="handleUploadError"
               :before-upload="beforeUpload"
+              drag
             >
               <div v-if="form.imgUrl" class="preview-image-wrapper">
                 <img :src="form.imgUrl" class="preview-image" />
@@ -99,12 +100,14 @@
               </div>
               <div v-else class="upload-placeholder">
                 <el-icon class="upload-icon"><Plus /></el-icon>
-                <span>点击上传图片</span>
+                <div class="el-upload__text">
+                  拖拽文件到此处，或<em>点击上传</em>
+                </div>
               </div>
             </el-upload>
           </div>
           <div class="url-input-wrapper">
-            <el-input v-model="form.imgUrl" placeholder="或直接输入图片URL" />
+            <el-input v-model="form.imgUrl" placeholder="或直接输入图片 URL" />
           </div>
         </el-form-item>
         <el-form-item label="链接地址" prop="linkUrl">

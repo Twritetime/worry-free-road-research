@@ -506,25 +506,12 @@ public class AiChatServiceImpl implements AiChatService {
             }
         }
 
-        if (!materials.isEmpty()) {
-            StringBuilder response = new StringBuilder();
-            response.append("📚 **相关资料**：\n\n");
-            for (Material m : materials) {
-                String price = m.getPrice() != null ? m.getPrice().toString() : "未知";
-                response.append(String.format("[%s](path=/materials/%d) - %s元 [%s]\n",
-                        m.getName(), m.getId(), price,
-                        m.getCategory() != null ? m.getCategory() : "未分类"));
-            }
-            response.append("\n[查看全部资料](path=/materials)");
-            return response.toString();
-        }
-
-        return "👋 你好！我是【研路无忧】的考研AI助手。\n\n" +
+        return "👋 你好！我是【研路无忧】的考研 AI 助手。\n\n" +
                 "我能帮你：\n" +
                 "• 解答考研政策、院校选择问题\n" +
                 "• 提供备考规划、各科复习方法\n" +
                 "• 推荐平台资料、解答复试调剂问题\n\n" +
-                "❗ 请注意：我不会提供平台的客服联系方式，如有售后问题请前往个人中心-帮助与反馈。\n\n" +
+                "❗ 请注意：我不会提供平台的客服联系方式，如有售后问题请前往个人中心 - 帮助与反馈。\n\n" +
                 "请直接说你想问的问题，我会直接回答！";
     }
 
@@ -679,7 +666,7 @@ public class AiChatServiceImpl implements AiChatService {
         if (materials == null || materials.isEmpty()) {
             return "";
         }
-        StringBuilder sb = new StringBuilder("📚 **平台相关资料推荐**：\n\n");
+        StringBuilder sb = new StringBuilder("\n\n💡 **平台相关资料推荐**：\n");
         int count = 0;
         for (Material m : materials) {
             if (count >= 5) break;
