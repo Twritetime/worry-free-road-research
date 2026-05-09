@@ -646,10 +646,6 @@ public class AiChatServiceImpl implements AiChatService {
         Matcher pathMatcher = pathPattern.matcher(fixed);
         boolean hasValidLinks = pathMatcher.find();
 
-        if (!hasValidLinks && !validMaterials.isEmpty()) {
-            fixed = fixed + "\n\n" + buildMaterialLinks(validMaterials);
-        }
-
         return fixed;
     }
 
