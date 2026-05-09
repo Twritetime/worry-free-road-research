@@ -109,24 +109,7 @@ public class DashboardController {
     @GetMapping("/material-sales-ranking")
     public Result<List<Map<String, Object>>> getMaterialSalesRanking(
             @RequestParam(defaultValue = "10") int limit) {
-        LambdaQueryWrapper<OrderItem> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.select(OrderItem::getMaterialId, OrderItem::getMaterialName)
-                .apply("SUM(quantity) as totalQuantity")
-                .groupBy(OrderItem::getMaterialId, OrderItem::getMaterialName)
-                .orderByDesc(OrderItem::getQuantity)
-                .last("LIMIT " + limit);
-
-        List<OrderItem> items = orderItemService.list(queryWrapper);
-        List<Map<String, Object>> ranking = new ArrayList<>();
-        int rank = 1;
-        for (OrderItem item : items) {
-            Map<String, Object> entry = new HashMap<>();
-            entry.put("rank", rank++);
-            entry.put("materialId", item.getMaterialId());
-            entry.put("materialName", item.getMaterialName());
-            entry.put("salesCount", item.getQuantity() != null ? item.getQuantity() : 0);
-            ranking.add(entry);
-        }
+        List<Map<String, Object>> ranking = orderItemService.getMaterialSalesRanking(limit);
         return Result.success(ranking);
     }
 

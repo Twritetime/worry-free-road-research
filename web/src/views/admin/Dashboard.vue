@@ -105,14 +105,14 @@ const fetchChartData = async () => {
       getMaterialSalesRanking({ limit: 7 })
     ])
     
-    salesData.value = salesTrend.map(item => Number(item.amount) || 0)
+    // 销量图表 - 使用资料销售排名的真实销量数据
+    salesData.value = materialSales.map(item => (item.salesCount || 0))
     
-    viewData.value = materialSales.map(item => (item.salesCount || 0) * 50)
+    // 浏览量图表 - 使用销量的合理倍数估算（行业通常浏览量是销量的30-50倍）
+    viewData.value = materialSales.map(item => (item.salesCount || 0) * 35)
     
-    revenueData.value = salesTrend.map(item => {
-      const amount = Number(item.amount) || 0
-      return amount * 1.2 + Math.floor(Math.random() * 1000)
-    })
+    // 营收图表 - 使用销售趋势的真实金额数据
+    revenueData.value = salesTrend.map(item => Number(item.amount) || 0)
   } catch (error) {
     console.error(error)
     viewData.value = [3200, 4100, 3800, 4600, 5200, 6100, 5800]
