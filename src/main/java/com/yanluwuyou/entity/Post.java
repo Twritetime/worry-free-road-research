@@ -76,4 +76,9 @@ public class Post extends BaseEntity {
      * 是否置顶: 0-否, 1-是
      */
     private Integer isTop;
+
+    /**
+     * 审核备注（拒绝时填写原因）
+     */
+    private String auditRemark;
 }

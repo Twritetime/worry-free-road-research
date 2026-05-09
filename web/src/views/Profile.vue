@@ -144,6 +144,7 @@
             <OrderList v-if="activeMenu === 'orders'" />
             <AddressList v-if="activeMenu === 'address'" />
             <FavoriteList v-if="activeMenu === 'favorites'" />
+            <NotificationList v-if="activeMenu === 'notifications'" @update:unread-count="handleUnreadCountUpdate" />
             <FeedbackList v-if="activeMenu === 'feedback'" />
             
              <!-- My Posts -->
@@ -158,6 +159,17 @@
                           <span class="table-link" @click="$router.push(`/posts/${row.id}`)">{{ row.title }}</span>
                         </template>
                       </el-table-column>
+                      <el-table-column label="审核状态" width="120" align="center">
+                        <template #default="{ row }">
+                          <el-tag :type="getStatusTag(row.status)">{{ getStatusText(row.status) }}</el-tag>
+                        </template>
+                      </el-table-column>
+                      <el-table-column prop="auditRemark" label="审核备注" min-width="150" show-overflow-tooltip>
+                        <template #default="{ row }">
+                          <span v-if="row.auditRemark" class="remark-text">{{ row.auditRemark }}</span>
+                          <span v-else class="empty-text">-</span>
+                        </template>
+                      </el-table-column>
                       <el-table-column prop="createTime" label="发布时间" width="180">
                            <template #default="{ row }">
                                {{ formatDate(row.createTime) }}
@@ -168,7 +180,7 @@
                       <el-table-column prop="commentCount" label="评论" width="100" align="center"></el-table-column>
                       <el-table-column label="操作" width="150" fixed="right" align="center">
                         <template #default="{ row }">
-                          <el-button type="primary" link @click="handleEditPost(row)">编辑</el-button>
+                          <el-button type="primary" link @click="handleEditPost(row)" :disabled="row.status === 1">编辑</el-button>
                           <el-button type="danger" link @click="handleDeletePost(row.id)">删除</el-button>
                         </template>
                       </el-table-column>
@@ -193,7 +205,7 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
-import { User, Lock, ShoppingCart, ChatDotSquare, Plus, Location, Star, Service, EditPen, DataLine } from '@element-plus/icons-vue'
+import { User, Lock, ShoppingCart, ChatDotSquare, Plus, Location, Star, Service, EditPen, DataLine, Bell } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getUserInfo, updateUser, updatePassword } from '@/api/user'
 import { getPostList, deletePost } from '@/api/post'
@@ -448,6 +460,24 @@ const handleDeletePost = (id) => {
 const formatDate = (date) => {
     if (!date) return ''
     return dayjs(date).format('YYYY-MM-DD HH:mm')
+}
+
+const getStatusText = (status) => {
+    const map = {
+        0: '待审核',
+        1: '已通过',
+        2: '已拒绝'
+    }
+    return map[status] || '未知'
+}
+
+const getStatusTag = (status) => {
+    const map = {
+        0: 'warning',
+        1: 'success',
+        2: 'danger'
+    }
+    return map[status] || 'info'
 }
 
 const fetchPersonalStats = async () => {

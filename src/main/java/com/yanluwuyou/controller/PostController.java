@@ -105,12 +105,14 @@ public class PostController {
 
     @PutMapping("/{id}/audit/{status}")
     @RequireRoles({User.ROLE_ADMIN, User.ROLE_OPERATOR})
-    public Result<?> audit(@PathVariable Long id, @PathVariable Integer status) {
+    public Result<?> audit(@PathVariable Long id, @PathVariable Integer status, 
+                          @RequestParam(required = false) String auditRemark) {
         Post post = postService.getById(id);
         if (post == null) {
             return Result.error("帖子不存在");
         }
         post.setStatus(status);
+        post.setAuditRemark(auditRemark);
         postService.updateById(post);
         return Result.success();
     }
@@ -184,7 +186,7 @@ public class PostController {
         if (post.getViewCount() == null) post.setViewCount(0);
         if (post.getLikeCount() == null) post.setLikeCount(0);
         if (post.getCommentCount() == null) post.setCommentCount(0);
-        if (post.getStatus() == null) post.setStatus(1);
+        if (post.getStatus() == null) post.setStatus(0);
         post.setUserId(AuthGuard.currentUserId());
         User user = userService.getById(post.getUserId());
         if (user != null) {
@@ -226,6 +228,7 @@ public class PostController {
             post.setNickname(user.getNickname() != null ? user.getNickname() : user.getUsername());
             post.setAvatar(user.getAvatar());
         }
+        post.setStatus(0);
         postService.updateById(post);
         return Result.success();
     }

@@ -177,7 +177,7 @@ const submitForm = async () => {
                         avatar: user.value.avatar
                     }
                     await createPost(postData)
-                    ElMessage.success('发布成功')
+                    ElMessage.success('帖子已提交，等待审核')
                 }
                 router.push('/forum')
             } catch (error) {

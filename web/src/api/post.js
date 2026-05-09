@@ -53,10 +53,11 @@ export const getPostListAll = (params) => {
 }
 
 // 审核帖子
-export const auditPost = (id, status) => {
+export const auditPost = (id, status, auditRemark) => {
     return request({
         url: `/post/${id}/audit/${status}`,
-        method: 'put'
+        method: 'put',
+        params: auditRemark ? { auditRemark } : {}
     })
 }
 

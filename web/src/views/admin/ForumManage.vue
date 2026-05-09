@@ -47,12 +47,18 @@
             />
           </template>
         </el-table-column>
+        <el-table-column prop="auditRemark" label="审核备注" min-width="150" show-overflow-tooltip>
+          <template #default="{ row }">
+            <span v-if="row.auditRemark" class="remark-text">{{ row.auditRemark }}</span>
+            <span v-else class="empty-text">-</span>
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" link @click="handleView(row)">查看</el-button>
             <el-button type="success" link @click="handleComments(row)">评论</el-button>
             <el-button v-if="row.status === 0" type="success" link @click="handleAudit(row, 1)">通过</el-button>
-            <el-button v-if="row.status === 0" type="warning" link @click="handleAudit(row, 2)">拒绝</el-button>
+            <el-button v-if="row.status === 0" type="warning" link @click="showRejectDialog(row)">拒绝</el-button>
             <el-button type="danger" link @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
@@ -85,7 +91,7 @@
             <span class="dialog-footer">
                 <el-button @click="dialogVisible = false">关闭</el-button>
                 <el-button v-if="currentPost && currentPost.status === 0" type="success" @click="handleAudit(currentPost, 1)">通过</el-button>
-                <el-button v-if="currentPost && currentPost.status === 0" type="warning" @click="handleAudit(currentPost, 2)">拒绝</el-button>
+                <el-button v-if="currentPost && currentPost.status === 0" type="warning" @click="showRejectDialog(currentPost)">拒绝</el-button>
                 <el-button type="danger" @click="handleDelete(currentPost)">删除此贴</el-button>
             </span>
         </template>
@@ -96,6 +102,27 @@
         :target-id="currentPostId"
         :target-type="1"
     />
+    
+    <!-- 拒绝审核对话框 -->
+    <el-dialog title="拒绝审核" v-model="rejectDialogVisible" width="400px">
+        <div>
+            <p>帖子标题: {{ rejectPost?.title }}</p>
+            <el-form-item label="拒绝原因" label-width="80px">
+                <el-input 
+                    v-model="auditRemark" 
+                    type="textarea" 
+                    :rows="3" 
+                    placeholder="请输入拒绝原因，将通知给用户"
+                />
+            </el-form-item>
+        </div>
+        <template #footer>
+            <span class="dialog-footer">
+                <el-button @click="rejectDialogVisible = false">取消</el-button>
+                <el-button type="danger" @click="handleReject">确认拒绝</el-button>
+            </span>
+        </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -118,6 +145,10 @@ const currentPostId = ref(null)
 
 const dialogVisible = ref(false)
 const currentPost = ref(null)
+
+const rejectDialogVisible = ref(false)
+const rejectPost = ref(null)
+const auditRemark = ref('')
 
 const getCategoryText = (cat) => {
   const map = { 1: '公共课交流', 2: '专业课交流', 3: '院校复试经验', 4: '其他' }
@@ -179,6 +210,23 @@ const handleAudit = async (row, status) => {
     await auditPost(row.id, status)
     ElMessage.success(status === 1 ? '审核通过' : '已拒绝')
     if (dialogVisible.value) dialogVisible.value = false
+    fetchData()
+  } catch (error) {
+    // error handled by request interceptor
+  }
+}
+
+const showRejectDialog = (row) => {
+  rejectPost.value = row
+  auditRemark.value = ''
+  rejectDialogVisible.value = true
+}
+
+const handleReject = async () => {
+  try {
+    await auditPost(rejectPost.value.id, 2, auditRemark.value)
+    ElMessage.success('已拒绝')
+    rejectDialogVisible.value = false
     fetchData()
   } catch (error) {
     // error handled by request interceptor
